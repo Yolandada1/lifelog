@@ -275,9 +275,10 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
   const handleRemove=i=>removeTodo(sel,i);
   const handleSaveTodo=(i,u)=>saveTodo(sel,i,u);
   const getDots=dk2=>{const e=data[dk2];return e?.mood?MOODS.find(m=>m.val===e.mood)?.emoji:null};
+  const getDateTags=dk2=>{const e=data[dk2];if(!e?.todos)return[];const s=new Set();e.todos.forEach(t=>t.tags?.forEach(tid=>s.add(tid)));return[...s].slice(0,3).map(tid=>tags.find(t=>t.id===tid)).filter(Boolean)};
   const dismissToast=id=>sToasts(p=>p.filter(x=>x.id!==id));
 
-  const GL=<><style>{`@keyframes slideDown{from{transform:translate(-50%,-40px);opacity:0}to{transform:translate(-50%,0);opacity:1}}*{-webkit-tap-highlight-color:transparent}`}</style>{toasts.map(t=><Toast key={t.id} msg={`⏰ ${t.msg}`} onClose={()=>dismissToast(t.id)}/>)}</>;
+  const GL=<><style>{`@keyframes slideDown{from{transform:translate(-50%,-40px);opacity:0}to{transform:translate(-50%,0);opacity:1}}@keyframes fadeUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}*{-webkit-tap-highlight-color:transparent}`}</style>{toasts.map(t=><Toast key={t.id} msg={`⏰ ${t.msg}`} onClose={()=>dismissToast(t.id)}/>)}</>;
   const wrap={maxWidth:920,margin:"0 auto",padding:"16px 16px 80px"};
 
   // ── NAV: 日历 | 洞见 | +标签 | 账号+登出
@@ -324,123 +325,131 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
     {showNT&&<NewTagModal onClose={()=>sSNT(false)} onCreate={t=>addTag(t)}/>}
     {showAddTodo&&<AddTodoModal tags={tags} defaultPeriod={defaultPeriod} onAdd={handleAddTodo} onClose={()=>sSAT(false)}/>}
     {eTIdx!==null&&entry?.todos?.[eTIdx]&&<EditTodoModal todo={entry.todos[eTIdx]} tags={tags} onSave={u=>handleSaveTodo(eTIdx,u)} onClose={()=>sETIdx(null)}/>}
-    <div style={wrap}><Nav/>
-      <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-        {/* Calendar */}
-        <div style={{flex:"1 1 340px",minWidth:280}}>
-          <div style={{background:T.card,borderRadius:16,padding:20,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <button onClick={prev} style={{background:"none",border:"none",color:T.textSec,fontSize:18,cursor:"pointer",padding:"4px 10px"}}>‹</button>
-              <h2 style={{margin:0,fontSize:17,fontWeight:600,color:T.text}}>{yr} {MO[mo-1]}</h2>
-              <button onClick={next} style={{background:"none",border:"none",color:T.textSec,fontSize:18,cursor:"pointer",padding:"4px 10px"}}>›</button>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
-              {WK.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:T.textTer,padding:3,fontWeight:500}}>{d}</div>)}
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
-              {Array(fd).fill(0).map((_,i)=><div key={`b${i}`}/>)}
-              {Array.from({length:dim},(_,i)=>i+1).map(d=>{
-                const dK=dkFn(yr,mo,d);const isT=dK===todayK;const isS=dK===sel;const has=!!data[dK];
-                const mE=getDots(dK);
-                return <button key={d} onClick={()=>{sSel(dK);sEDiary(false);sENote(false);sETIdx(null)}} style={{
-                  position:"relative",aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1,
-                  background:isS?T.text:has?T.accentSoft:"transparent",
-                  border:isT&&!isS?`1.5px solid ${T.text}`:"1.5px solid transparent",
-                  borderRadius:10,cursor:"pointer",color:isS?"#fff":has?T.text:T.textTer,
-                  fontSize:13,fontWeight:isS||isT?600:400,transition:"all .15s",
-                }}><span>{d}</span>{mE&&<span style={{fontSize:9,lineHeight:1}}>{mE}</span>}
-                </button>
-              })}
-            </div>
+
+    {/* ═══ Day Detail Fullscreen Modal ═══ */}
+    {sel&&<div style={{position:"fixed",inset:0,zIndex:900,background:T.bg,overflowY:"auto",animation:"fadeUp .25s ease-out"}}>
+      {/* Modal Header */}
+      <div style={{position:"sticky",top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.divider}`,padding:"12px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <button onClick={()=>{sSel(null);sEDiary(false);sENote(false);sETIdx(null)}} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:14,fontWeight:500,display:"flex",alignItems:"center",gap:4}}>
+          ← 返回
+        </button>
+        <div style={{textAlign:"center"}}>
+          <div style={{fontSize:16,fontWeight:700,color:T.text}}>{sel}</div>
+          <div style={{fontSize:12,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:6}}>· 今天</span>}</div>
+        </div>
+        <div style={{width:50}}/>
+      </div>
+
+      {/* Modal Body */}
+      <div style={{maxWidth:600,margin:"0 auto",padding:"20px 20px 100px"}}>
+        {/* 📝 随手记 */}
+        <div style={{marginBottom:28}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontSize:16,color:T.text,fontWeight:600}}>📝 随手记</span>
+            <button onClick={()=>sENote(!eNote)} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:13,fontWeight:500}}>{eNote?"完成":"编辑"}</button>
           </div>
+          {eNote?<textarea value={entry?.note||""} onChange={e=>updateEntry(sel,{note:e.target.value})} placeholder="随便写点什么..." style={{width:"100%",minHeight:80,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radius,padding:14,color:T.text,fontSize:15,lineHeight:1.7,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+          :<div onClick={()=>sENote(true)} style={{background:T.accentSoft,borderRadius:T.radius,padding:16,minHeight:44,cursor:"pointer",fontSize:15,lineHeight:1.7,color:entry?.note?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.note||"点击随手记录..."}</div>}
         </div>
 
-        {/* Detail */}
-        <div style={{flex:"1 1 400px",minWidth:300}}>
-          {!sel?<div style={{background:T.card,borderRadius:16,padding:44,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow,textAlign:"center"}}>
-            <div style={{fontSize:44,marginBottom:12,opacity:.4}}>📅</div><p style={{color:T.textTer,fontSize:14,margin:0}}>点击日历中的日期</p><p style={{color:T.textTer,fontSize:12,margin:"4px 0 0",opacity:.6}}>开始记录你的一天</p>
-          </div>:(
-          <div style={{background:T.card,borderRadius:16,padding:22,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow,maxHeight:"82vh",overflowY:"auto"}}>
-            {/* Date header */}
-            <div style={{marginBottom:16}}>
-              <h3 style={{margin:0,fontSize:16,fontWeight:600,color:T.text}}>{sel}</h3>
-              <p style={{margin:"2px 0 0",fontSize:12,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:8,fontWeight:500}}>· 今天</span>}</p>
-            </div>
-
-            {/* 📝 随手记 */}
-            <div style={{marginBottom:20}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:13,color:T.text,fontWeight:500}}>📝 随手记</span>
-                <button onClick={()=>sENote(!eNote)} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,fontWeight:500}}>{eNote?"完成":"编辑"}</button>
-              </div>
-              {eNote?<textarea value={entry?.note||""} onChange={e=>updateEntry(sel,{note:e.target.value})} placeholder="随便写点什么..." style={{width:"100%",minHeight:70,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:10,padding:12,color:T.text,fontSize:13,lineHeight:1.7,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-              :<div onClick={()=>sENote(true)} style={{background:T.accentSoft,borderRadius:10,padding:14,minHeight:40,cursor:"pointer",fontSize:13,lineHeight:1.7,color:entry?.note?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.note||"点击随手记录..."}</div>}
-            </div>
-
-            {/* 待办事项 - 按时段分组 */}
-            <div style={{marginBottom:20}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <span style={{fontSize:13,color:T.text,fontWeight:500}}>✅ 待办事项 {entry?.todos?.length>0&&<span style={{color:T.textTer,fontWeight:400}}>{entry.todos.filter(t=>t.done).length}/{entry.todos.length}</span>}</span>
-              </div>
-              {PERIODS.map(pd=>{
-                const items=todosByPeriod(pd.id);
-                const isOpen=openP[pd.id];
-                return <div key={pd.id} style={{marginBottom:10}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",cursor:"pointer"}} onClick={()=>togP(pd.id)}>
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <span style={{fontSize:10,color:T.textTer,transition:"transform .2s",transform:isOpen?"rotate(90deg)":"rotate(0deg)"}}>▶</span>
-                      <span style={{fontSize:14,color:T.text,fontWeight:600}}>{pd.label}</span>
-                      <span style={{fontSize:12,color:T.textTer}}>{items.length}</span>
-                    </div>
-                    <button onClick={e=>{e.stopPropagation();sSAT(true);setDefaultPeriod(pd.id)}} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,color:T.textSec,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-                  </div>
-                  {isOpen&&items.length>0&&<div style={{display:"flex",flexDirection:"column",gap:5,marginLeft:4}}>
-                    {items.map(todo=><div key={todo.id||todo._idx} style={{background:T.accentSoft,borderRadius:10,padding:"10px 12px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <button onClick={()=>handleToggle(todo._idx)} style={{width:20,height:20,borderRadius:6,border:todo.done?"none":`1.5px solid ${T.textTer}`,background:todo.done?T.text:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:11,flexShrink:0}}>{todo.done&&"✓"}</button>
-                        <span style={{flex:1,fontSize:13,color:todo.done?T.textTer:T.text,textDecoration:todo.done?"line-through":"none"}}>{todo.text}</span>
-                        {todo.reminder&&<span style={{fontSize:10,color:"#2563eb",background:"#2563eb10",borderRadius:5,padding:"1px 6px",fontWeight:500}}>⏰{todo.reminder}</span>}
-                        <button onClick={()=>sETIdx(todo._idx)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:12}}>✏️</button>
-                        <button onClick={()=>handleRemove(todo._idx)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:14}}>×</button>
-                      </div>
-                      {todo.tags?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6,marginLeft:30}}>{todo.tags.map(tid=>{const tg=tags.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:10,background:`${tg.color}10`,color:tg.color,borderRadius:6,padding:"2px 8px",fontWeight:500}}>{tg.icon} {tg.label}</span>:null})}</div>}
-                    </div>)}
-                  </div>}
+        {/* ✅ 待办事项 */}
+        <div style={{marginBottom:28}}>
+          <div style={{marginBottom:12}}>
+            <span style={{fontSize:16,color:T.text,fontWeight:600}}>✅ 待办事项 {entry?.todos?.length>0&&<span style={{color:T.textTer,fontWeight:400,fontSize:14}}>{entry.todos.filter(t=>t.done).length}/{entry.todos.length}</span>}</span>
+          </div>
+          {PERIODS.map(pd=>{
+            const items=todosByPeriod(pd.id);
+            const isOpen=openP[pd.id];
+            return <div key={pd.id} style={{marginBottom:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",cursor:"pointer"}} onClick={()=>togP(pd.id)}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:11,color:T.textTer,transition:"transform .2s",transform:isOpen?"rotate(90deg)":"rotate(0deg)"}}>▶</span>
+                  <span style={{fontSize:16,color:T.text,fontWeight:600}}>{pd.label}</span>
+                  <span style={{fontSize:13,color:T.textTer}}>{items.length}</span>
                 </div>
-              })}
-              {!(entry?.todos?.length)&&<div style={{textAlign:"center",padding:20,color:T.textTer,fontSize:13}}>点击时段旁的 + 创建待办</div>}
-            </div>
-
-            {/* 📓 日记/总结 */}
-            <div style={{marginBottom:20}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:13,color:T.text,fontWeight:500}}>📓 日记 / 总结</span>
-                <button onClick={()=>sEDiary(!eDiary)} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:12,fontWeight:500}}>{eDiary?"完成":"编辑"}</button>
+                <button onClick={e=>{e.stopPropagation();sSAT(true);setDefaultPeriod(pd.id)}} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:16,color:T.textSec,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
               </div>
-              {eDiary?<textarea value={entry?.diary||""} onChange={e=>updateEntry(sel,{diary:e.target.value})} placeholder="记录今天的总结..." style={{width:"100%",minHeight:100,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:10,padding:12,color:T.text,fontSize:13,lineHeight:1.8,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-              :<div onClick={()=>sEDiary(true)} style={{background:T.accentSoft,borderRadius:10,padding:14,minHeight:50,cursor:"pointer",fontSize:13,lineHeight:1.8,color:entry?.diary?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.diary||"点击写日记..."}</div>}
+              {isOpen&&items.length>0&&<div style={{display:"flex",flexDirection:"column",gap:6,marginLeft:4}}>
+                {items.map(todo=><div key={todo.id||todo._idx} style={{background:T.accentSoft,borderRadius:T.radius,padding:"12px 14px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <button onClick={()=>handleToggle(todo._idx)} style={{width:22,height:22,borderRadius:7,border:todo.done?"none":`1.5px solid ${T.textTer}`,background:todo.done?T.text:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,flexShrink:0}}>{todo.done&&"✓"}</button>
+                    <span style={{flex:1,fontSize:15,color:todo.done?T.textTer:T.text,textDecoration:todo.done?"line-through":"none"}}>{todo.text}</span>
+                    {todo.reminder&&<span style={{fontSize:11,color:"#2563eb",background:"#2563eb10",borderRadius:6,padding:"2px 8px",fontWeight:500}}>⏰{todo.reminder}</span>}
+                    <button onClick={()=>sETIdx(todo._idx)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:13}}>✏️</button>
+                    <button onClick={()=>handleRemove(todo._idx)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:16}}>×</button>
+                  </div>
+                  {todo.tags?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8,marginLeft:34}}>{todo.tags.map(tid=>{const tg=tags.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:11,background:`${tg.color}10`,color:tg.color,borderRadius:6,padding:"2px 10px",fontWeight:500}}>{tg.icon} {tg.label}</span>:null})}</div>}
+                </div>)}
+              </div>}
             </div>
+          })}
+          {!(entry?.todos?.length)&&<div style={{textAlign:"center",padding:24,color:T.textTer,fontSize:14}}>点击时段旁的 + 创建待办</div>}
+        </div>
 
-            {/* 心情 - 右到左降序 */}
-            <div style={{marginBottom:20}}>
-              <div style={{fontSize:12,color:T.textTer,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.03em"}}>今日心情</div>
-              <div style={{display:"flex",gap:6}}>{MOODS.map(m=><button key={m.val} onClick={()=>updateEntry(sel,{mood:m.val})} style={{
-                flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-                background:entry?.mood===m.val?T.card:T.accentSoft,
-                border:entry?.mood===m.val?`2px solid ${m.color}`:`1px solid ${T.divider}`,
-                borderRadius:10,padding:"10px 3px",cursor:"pointer",boxShadow:entry?.mood===m.val?T.shadowMd:"none",
-              }}><span style={{fontSize:20}}>{m.emoji}</span><span style={{fontSize:10,color:entry?.mood===m.val?m.color:T.textTer,fontWeight:500}}>{m.label}</span></button>)}</div>
-            </div>
+        {/* 📓 日记/总结 */}
+        <div style={{marginBottom:28}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontSize:16,color:T.text,fontWeight:600}}>📓 日记 / 总结</span>
+            <button onClick={()=>sEDiary(!eDiary)} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:13,fontWeight:500}}>{eDiary?"完成":"编辑"}</button>
+          </div>
+          {eDiary?<textarea value={entry?.diary||""} onChange={e=>updateEntry(sel,{diary:e.target.value})} placeholder="记录今天的总结..." style={{width:"100%",minHeight:120,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radius,padding:14,color:T.text,fontSize:15,lineHeight:1.8,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+          :<div onClick={()=>sEDiary(true)} style={{background:T.accentSoft,borderRadius:T.radius,padding:16,minHeight:60,cursor:"pointer",fontSize:15,lineHeight:1.8,color:entry?.diary?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.diary||"点击写日记..."}</div>}
+        </div>
 
-            {/* 评分 */}
-            <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:12,color:T.textTer,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.03em"}}>今日评分</span>
-                <span style={{fontSize:20,fontWeight:700,color:T.text}}>{entry?.score||6}<span style={{fontSize:13,color:T.textTer,fontWeight:400}}>/10</span></span>
-              </div>
-              <input type="range" min="1" max="10" value={entry?.score||6} onChange={e=>updateEntry(sel,{score:parseInt(e.target.value)})} style={{width:"100%",accentColor:T.text}}/>
-            </div>
-          </div>)}
+        {/* 心情 */}
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:14,color:T.textTer,marginBottom:10,fontWeight:500}}>今日心情</div>
+          <div style={{display:"flex",gap:8}}>{MOODS.map(m=><button key={m.val} onClick={()=>updateEntry(sel,{mood:m.val})} style={{
+            flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+            background:entry?.mood===m.val?T.card:T.accentSoft,
+            border:entry?.mood===m.val?`2px solid ${m.color}`:`1px solid ${T.divider}`,
+            borderRadius:T.radius,padding:"14px 4px",cursor:"pointer",boxShadow:entry?.mood===m.val?T.shadowMd:"none",
+          }}><span style={{fontSize:26}}>{m.emoji}</span><span style={{fontSize:12,color:entry?.mood===m.val?m.color:T.textTer,fontWeight:500}}>{m.label}</span></button>)}</div>
+        </div>
+
+        {/* 评分 */}
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontSize:14,color:T.textTer,fontWeight:500}}>今日评分</span>
+            <span style={{fontSize:24,fontWeight:700,color:T.text}}>{entry?.score||6}<span style={{fontSize:14,color:T.textTer,fontWeight:400}}>/10</span></span>
+          </div>
+          <input type="range" min="1" max="10" value={entry?.score||6} onChange={e=>updateEntry(sel,{score:parseInt(e.target.value)})} style={{width:"100%",accentColor:T.text}}/>
+        </div>
+      </div>
+    </div>}
+
+    <div style={wrap}><Nav/>
+      {/* Calendar - now full width */}
+      <div style={{maxWidth:500,margin:"0 auto"}}>
+        <div style={{background:T.card,borderRadius:16,padding:22,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+            <button onClick={prev} style={{background:"none",border:"none",color:T.textSec,fontSize:20,cursor:"pointer",padding:"4px 12px"}}>‹</button>
+            <h2 style={{margin:0,fontSize:18,fontWeight:600,color:T.text}}>{yr} {MO[mo-1]}</h2>
+            <button onClick={next} style={{background:"none",border:"none",color:T.textSec,fontSize:20,cursor:"pointer",padding:"4px 12px"}}>›</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:6}}>
+            {WK.map(d=><div key={d} style={{textAlign:"center",fontSize:12,color:T.textTer,padding:4,fontWeight:500}}>{d}</div>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
+            {Array(fd).fill(0).map((_,i)=><div key={`b${i}`}/>)}
+            {Array.from({length:dim},(_,i)=>i+1).map(d=>{
+              const dK=dkFn(yr,mo,d);const isT=dK===todayK;const has=!!data[dK];
+              const mE=getDots(dK);
+              const dateTags=getDateTags(dK);
+              return <button key={d} onClick={()=>{sSel(dK);sEDiary(false);sENote(false);sETIdx(null);sOpenP({morning:true,afternoon:true,evening:true})}} style={{
+                position:"relative",aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
+                background:has?T.accentSoft:"transparent",
+                border:isT?`2px solid ${T.text}`:"1.5px solid transparent",
+                borderRadius:12,cursor:"pointer",color:has?T.text:T.textTer,
+                fontSize:14,fontWeight:isT?700:has?500:400,transition:"all .15s",
+              }}><span>{d}</span>
+                {mE&&<span style={{fontSize:10,lineHeight:1}}>{mE}</span>}
+                {dateTags.length>0&&<div style={{display:"flex",gap:2,position:"absolute",bottom:3}}>
+                  {dateTags.map((tg,i)=><div key={i} style={{width:5,height:5,borderRadius:"50%",background:tg.color}}/>)}
+                </div>}
+              </button>
+            })}
+          </div>
         </div>
       </div>
     </div>
