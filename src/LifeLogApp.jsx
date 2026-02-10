@@ -157,8 +157,13 @@ function InsightSummary({stats,tags,type}){
   const sm=(type==="monthly"?stats.ms:stats.ys)[sel];
   const label=k=>{
     if(type==="yearly")return k+"年";
-    if(type==="weekly"){const parts=k.split("-");return parts[1]+"月"+parts[2]}
-    const[y,m]=k.split("-");return y+"年"+MO[parseInt(m)-1]
+    if(type==="weekly"){
+      // key format: "2026-02-W06"
+      const m=k.split("-")[1];
+      const w=k.split("-W")[1];
+      return m+"月W"+w;
+    }
+    const[y,m]=k.split("-");return y+"年"+MO[parseInt(m)-1];
   };
   return <>
     <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap",overflowX:"auto"}}>{keys.map(k=><button key={k} onClick={()=>sSel(k)} style={{background:sel===k?T.text:T.accentSoft,color:sel===k?"#fff":T.textSec,border:sel===k?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:sel===k?600:400,whiteSpace:"nowrap"}}>{label(k)}</button>)}</div>
@@ -223,6 +228,7 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
   const[eDiary,sEDiary]=useState(false);const[eNote,sENote]=useState(false);
   const[showNT,sSNT]=useState(false);const[showAddTodo,sSAT]=useState(false);const[defaultPeriod,setDefaultPeriod]=useState("morning");
   const[eTIdx,sETIdx]=useState(null);
+  const[openP,sOpenP]=useState({morning:true,afternoon:true,evening:true});
   const[toasts,sToasts]=useState([]);
   const fired=useRef(new Set());
 
@@ -293,7 +299,7 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
 
   // ── INSIGHTS VIEW
   if(view==="insights"){
-    const tabs=[{id:"tags",l:"🏷️ 标签"},{id:"mood",l:"😊 心情"},{id:"diary",l:"📓 日记"},{id:"weekly",l:"📅 周"},{id:"monthly",l:"📊 月"},{id:"yearly",l:"📈 年"}];
+    const tabs=[{id:"tags",l:"🏷️ 标签"},{id:"mood",l:"😊 心情"},{id:"diary",l:"📓 日记"},{id:"monthly",l:"📊 月"},{id:"yearly",l:"📈 年"}];
     return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
       {showNT&&<NewTagModal onClose={()=>sSNT(false)} onCreate={t=>addTag(t)}/>}
       <div style={wrap}><Nav/>
@@ -312,7 +318,6 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
 
   // ── CALENDAR VIEW
   const todosByPeriod=(p)=>(entry?.todos||[]).map((t,i)=>({...t,_idx:i})).filter(t=>t.period===p);
-  const[openP,sOpenP]=useState({morning:true,afternoon:true,evening:true});
   const togP=p=>sOpenP(prev=>({...prev,[p]:!prev[p]}));
 
   return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
