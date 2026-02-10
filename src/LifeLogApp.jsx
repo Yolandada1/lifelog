@@ -10,9 +10,7 @@ const EMOJIS={
   "物品":["💼","📚","💰","🏠","🎨","🎵","📷","💻","🎮","📱","🔧","🎁","💊","🛒","📦","🧪"],
   "自然":["🌸","🌿","🌈","🌙","☀️","❄️","🌊","🍂","🌻","🌴","🍀","💐","🌺","🌵","🪴","✨"],
 };
-const TAG_COLORS=["#2563eb","#7c3aed","#059669","#d97706","#db2777","#6366f1","#0d9488","#ea580c","#dc2626","#65a30d","#0891b2","#9333ea"];
-
-// Mood: 右到左降序，右边最积极（拇指区），默认为"开心"(val=4)
+const TAG_COLORS=["#2563eb","#9333ea","#059669","#dc2626","#d97706","#db2777","#0891b2","#ea580c","#4f46e5","#16a34a","#e11d48","#ca8a04"];
 const MOODS=[
   {val:1,emoji:"🤬",label:"生气",color:"#dc2626"},
   {val:2,emoji:"🙁",label:"EMO",color:"#ea580c"},
@@ -20,56 +18,74 @@ const MOODS=[
   {val:4,emoji:"😋",label:"开心",color:"#2563eb"},
   {val:5,emoji:"🥳",label:"超棒",color:"#059669"},
 ];
-
 const dkFn=(y,m,d)=>`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 const MO=["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
 const WK=["日","一","二","三","四","五","六"];
 const PERIODS=[{id:"morning",label:"🌅 上午"},{id:"afternoon",label:"☀️ 下午"},{id:"evening",label:"🌙 晚上"}];
-
 const T={bg:"#fafaf9",card:"#ffffff",cardBorder:"#e7e5e4",text:"#1c1917",textSec:"#78716c",textTer:"#a8a29e",accentSoft:"#f5f5f4",divider:"#e7e5e4",radius:12,radiusSm:8,shadow:"0 1px 3px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.03)",shadowMd:"0 4px 12px rgba(0,0,0,0.06)"};
 
-/* ═══ Small Components ═══ */
 function Toast({msg,onClose}){
   return <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:9999,background:T.text,color:"#fff",borderRadius:T.radius,padding:"12px 20px",boxShadow:T.shadowMd,display:"flex",alignItems:"center",gap:10,fontSize:13,maxWidth:"90vw",animation:"slideDown .3s ease-out"}}>
     <span style={{fontSize:18}}>🔔</span><span style={{flex:1}}>{msg}</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:14,opacity:.6}}>×</button>
   </div>;
 }
-
 function Modal({children,onClose}){
   return <div style={{position:"fixed",inset:0,zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.3)",backdropFilter:"blur(8px)"}} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>{children}</div>;
 }
 
-function NewTagModal({onClose,onCreate}){
-  const[l,sL]=useState("");const[c,sC]=useState(TAG_COLORS[0]);const[ic,sI]=useState("📌");const[cat,sCat]=useState("常用");
-  return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(380px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd,maxHeight:"82vh",overflowY:"auto"}}>
-    <h3 style={{margin:"0 0 18px",fontSize:16,color:T.text,fontWeight:600}}>新建标签</h3>
-    <input value={l} onChange={e=>sL(e.target.value)} placeholder="标签名称" style={{width:"100%",background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 14px",color:T.text,fontSize:14,outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"8px 14px",background:T.accentSoft,borderRadius:T.radiusSm}}>
-      <span style={{fontSize:20}}>{ic}</span><span style={{fontSize:14,color:c,fontWeight:500}}>{l||"预览"}</span>
-    </div>
-    <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>图标</div>
-    <div style={{display:"flex",gap:0,marginBottom:8,overflowX:"auto",background:T.accentSoft,borderRadius:T.radiusSm}}>
-      {Object.keys(EMOJIS).map(ct=><button key={ct} onClick={()=>sCat(ct)} style={{background:cat===ct?"#fff":"transparent",color:cat===ct?T.text:T.textTer,border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:11,whiteSpace:"nowrap",fontWeight:cat===ct?600:400,boxShadow:cat===ct?T.shadow:"none"}}>{ct}</button>)}
-    </div>
-    <div style={{display:"flex",flexWrap:"wrap",gap:3,marginBottom:14,maxHeight:130,overflowY:"auto",padding:4}}>
-      {(EMOJIS[cat]||[]).map((em,i)=><button key={em+i} onClick={()=>sI(em)} style={{width:36,height:36,borderRadius:T.radiusSm,border:ic===em?`2px solid ${T.text}`:"2px solid transparent",background:ic===em?T.accentSoft:"transparent",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>{em}</button>)}
-    </div>
-    <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>颜色</div>
-    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:20}}>
-      {TAG_COLORS.map(cl=><button key={cl} onClick={()=>sC(cl)} style={{width:28,height:28,borderRadius:"50%",border:c===cl?"2.5px solid "+T.text:"2px solid "+T.divider,background:cl,cursor:"pointer"}}/>)}
-    </div>
-    <div style={{display:"flex",gap:10}}>
-      <button onClick={onClose} style={{flex:1,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 0",color:T.textSec,cursor:"pointer",fontSize:13}}>取消</button>
-      <button onClick={()=>{if(l.trim()){onCreate({id:"t_"+Date.now(),label:l.trim(),color:c,icon:ic});onClose()}}} style={{flex:1,background:T.text,border:"none",borderRadius:T.radiusSm,padding:"10px 0",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>创建</button>
-    </div>
+/* ═══ Tag Management Modal ═══ */
+function ManageTagsModal({tags,onClose,onAdd,onEdit,onDelete}){
+  const[mode,sMode]=useState("list"); // list | add | edit
+  const[editTag,sEditTag]=useState(null);
+  const[label,sLabel]=useState("");
+  const[color,sColor]=useState(TAG_COLORS[0]);
+
+  const startAdd=()=>{sLabel("");sColor(TAG_COLORS[Math.floor(Math.random()*TAG_COLORS.length)]);sMode("add")};
+  const startEdit=(t)=>{sEditTag(t);sLabel(t.label);sColor(t.color);sMode("edit")};
+  const save=()=>{
+    if(!label.trim())return;
+    if(mode==="add"){onAdd({id:"t_"+Date.now(),label:label.trim(),color,icon:""});sMode("list")}
+    else if(mode==="edit"&&editTag){onEdit({...editTag,label:label.trim(),color});sMode("list")}
+  };
+
+  return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(400px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd,maxHeight:"80vh",overflowY:"auto"}}>
+    {mode==="list"?<>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+        <h3 style={{margin:0,fontSize:16,color:T.text,fontWeight:600}}>管理标签</h3>
+        <button onClick={startAdd} style={{background:T.text,border:"none",borderRadius:T.radiusSm,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>+ 新建</button>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {tags.map(t=><div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:`${t.color}12`,borderRadius:10,border:`1.5px solid ${t.color}30`}}>
+          <span style={{flex:1,fontSize:14,color:t.color,fontWeight:600}}>{t.label}</span>
+          <button onClick={()=>startEdit(t)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:12}}>✏️</button>
+          <button onClick={()=>{if(confirm(`确定删除「${t.label}」？`))onDelete(t.id)}} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:12}}>🗑</button>
+        </div>)}
+        {!tags.length&&<div style={{textAlign:"center",padding:20,color:T.textTer}}>暂无标签</div>}
+      </div>
+      <button onClick={onClose} style={{width:"100%",marginTop:16,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 0",color:T.textSec,cursor:"pointer",fontSize:13}}>关闭</button>
+    </>:<>
+      <h3 style={{margin:"0 0 18px",fontSize:16,color:T.text,fontWeight:600}}>{mode==="add"?"新建标签":"编辑标签"}</h3>
+      <input value={label} onChange={e=>sLabel(e.target.value)} placeholder="输入标签名称（可含 emoji）" autoFocus style={{width:"100%",background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"12px 14px",color:T.text,fontSize:15,outline:"none",marginBottom:16,boxSizing:"border-box"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,padding:"10px 14px",background:T.accentSoft,borderRadius:T.radiusSm}}>
+        <div style={{width:16,height:16,borderRadius:"50%",background:color}}/>
+        <span style={{fontSize:15,color,fontWeight:600}}>{label||"预览"}</span>
+      </div>
+      <div style={{fontSize:12,color:T.textSec,marginBottom:8}}>选择颜色</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+        {TAG_COLORS.map(cl=><button key={cl} onClick={()=>sColor(cl)} style={{width:32,height:32,borderRadius:"50%",border:color===cl?"3px solid "+T.text:"2px solid "+T.divider,background:cl,cursor:"pointer"}}/>)}
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={()=>sMode("list")} style={{flex:1,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 0",color:T.textSec,cursor:"pointer",fontSize:13}}>取消</button>
+        <button onClick={save} style={{flex:1,background:T.text,border:"none",borderRadius:T.radiusSm,padding:"10px 0",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}}>保存</button>
+      </div>
+    </>}
   </div></Modal>;
 }
 
-/* ═══ Add Todo Modal - 添加时就可以选标签/提醒/时段 ═══ */
 function AddTodoModal({tags,defaultPeriod,onAdd,onClose}){
   const[t,sT]=useState("");const[st,sST]=useState([]);const[r,sR]=useState("");const[p,sP]=useState(defaultPeriod||"morning");
   const tog=id=>sST(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
-  return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(380px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd,maxHeight:"85vh",overflowY:"auto"}}>
+  return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(400px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd,maxHeight:"85vh",overflowY:"auto"}}>
     <h3 style={{margin:"0 0 16px",fontSize:16,color:T.text,fontWeight:600}}>添加待办</h3>
     <input value={t} onChange={e=>sT(e.target.value)} placeholder="待办内容" autoFocus style={{width:"100%",background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 14px",color:T.text,fontSize:14,outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
     <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>时段</div>
@@ -78,7 +94,7 @@ function AddTodoModal({tags,defaultPeriod,onAdd,onClose}){
     </div>
     <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>关联标签</div>
     <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
-      {tags.map(tg=><button key={tg.id} onClick={()=>tog(tg.id)} style={{background:st.includes(tg.id)?`${tg.color}12`:T.accentSoft,color:st.includes(tg.id)?tg.color:T.textTer,border:st.includes(tg.id)?`1.5px solid ${tg.color}40`:`1px solid ${T.divider}`,borderRadius:16,padding:"5px 12px",cursor:"pointer",fontSize:12,fontWeight:st.includes(tg.id)?500:400}}>{tg.icon} {tg.label}</button>)}
+      {tags.map(tg=><button key={tg.id} onClick={()=>tog(tg.id)} style={{background:st.includes(tg.id)?`${tg.color}15`:T.accentSoft,color:st.includes(tg.id)?tg.color:T.textTer,border:st.includes(tg.id)?`2px solid ${tg.color}`:`1px solid ${T.divider}`,borderRadius:16,padding:"5px 12px",cursor:"pointer",fontSize:12,fontWeight:st.includes(tg.id)?600:400}}>{tg.label}</button>)}
     </div>
     <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>⏰ 提醒时间（可选）</div>
     <input type="time" value={r} onChange={e=>sR(e.target.value)} style={{width:"100%",background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 14px",color:T.text,fontSize:14,outline:"none",marginBottom:18,boxSizing:"border-box"}}/>
@@ -92,16 +108,16 @@ function AddTodoModal({tags,defaultPeriod,onAdd,onClose}){
 function EditTodoModal({todo,tags,onSave,onClose}){
   const[t,sT]=useState(todo.text);const[st,sST]=useState(todo.tags||[]);const[r,sR]=useState(todo.reminder||"");const[p,sP]=useState(todo.period||"morning");
   const tog=id=>sST(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
-  return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(380px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd}}>
+  return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(400px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd}}>
     <h3 style={{margin:"0 0 16px",fontSize:16,color:T.text,fontWeight:600}}>编辑待办</h3>
     <input value={t} onChange={e=>sT(e.target.value)} style={{width:"100%",background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 14px",color:T.text,fontSize:14,outline:"none",marginBottom:14,boxSizing:"border-box"}}/>
     <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>时段</div>
     <div style={{display:"flex",gap:6,marginBottom:14}}>
-      {PERIODS.map(pd=><button key={pd.id} onClick={()=>sP(pd.id)} style={{flex:1,background:p===pd.id?T.card:T.accentSoft,border:p===pd.id?`2px solid ${T.text}`:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"8px 4px",cursor:"pointer",fontSize:12,fontWeight:p===pd.id?600:400,color:p===pd.id?T.text:T.textSec,boxShadow:p===pd.id?T.shadow:"none"}}>{pd.label}</button>)}
+      {PERIODS.map(pd=><button key={pd.id} onClick={()=>sP(pd.id)} style={{flex:1,background:p===pd.id?T.card:T.accentSoft,border:p===pd.id?`2px solid ${T.text}`:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"8px 4px",cursor:"pointer",fontSize:12,fontWeight:p===pd.id?600:400,color:p===pd.id?T.text:T.textSec}}>{pd.label}</button>)}
     </div>
     <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>关联标签</div>
     <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
-      {tags.map(tg=><button key={tg.id} onClick={()=>tog(tg.id)} style={{background:st.includes(tg.id)?`${tg.color}12`:T.accentSoft,color:st.includes(tg.id)?tg.color:T.textTer,border:st.includes(tg.id)?`1.5px solid ${tg.color}40`:`1px solid ${T.divider}`,borderRadius:16,padding:"5px 12px",cursor:"pointer",fontSize:12}}>{tg.icon} {tg.label}</button>)}
+      {tags.map(tg=><button key={tg.id} onClick={()=>tog(tg.id)} style={{background:st.includes(tg.id)?`${tg.color}15`:T.accentSoft,color:st.includes(tg.id)?tg.color:T.textTer,border:st.includes(tg.id)?`2px solid ${tg.color}`:`1px solid ${T.divider}`,borderRadius:16,padding:"5px 12px",cursor:"pointer",fontSize:12,fontWeight:st.includes(tg.id)?600:400}}>{tg.label}</button>)}
     </div>
     <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>⏰ 提醒时间</div>
     <input type="time" value={r} onChange={e=>sR(e.target.value)} style={{width:"100%",background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radiusSm,padding:"10px 14px",color:T.text,fontSize:14,outline:"none",marginBottom:18,boxSizing:"border-box"}}/>
@@ -112,6 +128,7 @@ function EditTodoModal({todo,tags,onSave,onClose}){
   </div></Modal>;
 }
 
+/* ═══ Stat Components ═══ */
 function MiniBar({vals,colors,labels,h=70}){
   const mx=Math.max(...vals,1);
   return <div style={{display:"flex",alignItems:"flex-end",gap:6,height:h}}>
@@ -127,13 +144,51 @@ function SC({title,children}){
     <div style={{fontSize:12,color:T.textTer,marginBottom:8,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.03em"}}>{title}</div>{children}
   </div>;
 }
+function SummaryCards({sm,tags}){
+  const cr=sm.totalTodos?Math.round(sm.doneTodos/sm.totalTodos*100):0;
+  return <div style={{display:"flex",flexDirection:"column",gap:14}}>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
+      <SC title="记录天数"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.count}<span style={{fontSize:13,color:T.textTer,fontWeight:400}}> 天</span></div></SC>
+      <SC title="平均心情"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.avgMood.toFixed(1)}<span style={{fontSize:16,marginLeft:4}}>{MOODS.find(m=>m.val===Math.round(sm.avgMood))?.emoji}</span></div></SC>
+      <SC title="平均评分"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.avgScore.toFixed(1)}<span style={{fontSize:13,color:T.textTer,fontWeight:400}}>/10</span></div></SC>
+      <SC title="完成率"><div style={{fontSize:26,fontWeight:700,color:cr>=70?"#059669":cr>=40?"#d97706":"#dc2626"}}>{cr}%</div><div style={{fontSize:11,color:T.textTer}}>{sm.doneTodos}/{sm.totalTodos}</div></SC>
+    </div>
+    <SC title="心情分布"><MiniBar vals={sm.moodDist} colors={MOODS.map(m=>m.color)} labels={MOODS.map(m=>m.emoji)}/></SC>
+    <SC title="评分分布"><MiniBar vals={sm.scoreDist} colors={sm.scoreDist.map((_,i)=>i<3?"#dc2626":i<6?"#d97706":"#059669")} labels={[...Array(10)].map((_,i)=>`${i+1}`)}/></SC>
+    {sm.topTags.length>0&&<SC title="高频标签"><div style={{display:"flex",flexDirection:"column",gap:8}}>{sm.topTags.map(([tid,cnt],i)=>{const tg=tags.find(t=>t.id===tid);const mx=sm.topTags[0][1];return tg?<div key={tid} style={{display:"flex",alignItems:"center",gap:8}}>
+      <span style={{fontSize:12,color:T.textTer,width:16}}>#{i+1}</span><div style={{width:10,height:10,borderRadius:"50%",background:tg.color}}/><span style={{fontSize:12,color:T.text,width:44,fontWeight:500}}>{tg.label}</span>
+      <div style={{flex:1,height:6,background:T.accentSoft,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${(cnt/mx)*100}%`,background:tg.color,borderRadius:3}}/></div>
+      <span style={{fontSize:11,color:T.textSec,width:20,textAlign:"right"}}>{cnt}</span>
+    </div>:null})}</div></SC>}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      {sm.bestDay&&<SC title="🌟 最佳"><div style={{fontSize:13,fontWeight:600,color:"#059669"}}>{sm.bestDay.date}</div><div style={{fontSize:11,color:T.textSec,marginTop:3}}>{sm.bestDay.score}/10 {MOODS.find(m=>m.val===sm.bestDay.mood)?.emoji}</div></SC>}
+      {sm.worstDay&&<SC title="💪 加油"><div style={{fontSize:13,fontWeight:600,color:"#d97706"}}>{sm.worstDay.date}</div><div style={{fontSize:11,color:T.textSec,marginTop:3}}>{sm.worstDay.score}/10 {MOODS.find(m=>m.val===sm.worstDay.mood)?.emoji}</div></SC>}
+    </div>
+  </div>;
+}
+function EntryCard({dk:dateKey,e,hl,tags:tgs=[]}){
+  const et=e.todos?[...new Set(e.todos.flatMap(t=>t.tags||[]))]:[];
+  return <div style={{background:T.card,borderRadius:T.radius,padding:18,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow,borderLeft:hl?`3px solid ${hl}`:"none"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+      <span style={{fontSize:14,fontWeight:600,color:T.text}}>{dateKey}</span>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        {MOODS.find(m=>m.val===e.mood)&&<span style={{fontSize:16}}>{MOODS.find(m=>m.val===e.mood).emoji}</span>}
+        <span style={{background:T.accentSoft,borderRadius:6,padding:"2px 8px",fontSize:12,color:T.textSec,fontWeight:500}}>{e.score}/10</span>
+      </div>
+    </div>
+    {e.diary&&<div style={{margin:"4px 0 10px",fontSize:13,lineHeight:1.7,color:T.textSec,whiteSpace:"pre-wrap"}}>{e.diary}</div>}
+    {et.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+      {et.map(tid=>{const tg=tgs.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:10,background:`${tg.color}10`,color:tg.color,borderRadius:6,padding:"2px 8px",fontWeight:500}}>{tg.label}</span>:null})}
+    </div>}
+  </div>;
+}
 
-/* ═══ Insights Sub Views ═══ */
+/* ═══ Insight Views ═══ */
 function InsightTags({data,tags,fTag,sFTag}){
   const ents=Object.entries(data).filter(([_,v])=>v.todos?.some(t=>t.tags?.includes(fTag))).sort(([a],[b])=>b.localeCompare(a));
   const tO=tags.find(t=>t.id===fTag);
   return <>
-    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:20}}>{tags.map(t=><button key={t.id} onClick={()=>sFTag(t.id)} style={{background:fTag===t.id?`${t.color}10`:T.accentSoft,color:fTag===t.id?t.color:T.textSec,border:fTag===t.id?`1.5px solid ${t.color}40`:`1px solid ${T.divider}`,borderRadius:20,padding:"6px 16px",cursor:"pointer",fontSize:12,fontWeight:fTag===t.id?600:400}}>{t.icon} {t.label}</button>)}</div>
+    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:20}}>{tags.map(t=><button key={t.id} onClick={()=>sFTag(t.id)} style={{background:fTag===t.id?`${t.color}15`:T.accentSoft,color:fTag===t.id?t.color:T.textSec,border:fTag===t.id?`2px solid ${t.color}`:`1px solid ${T.divider}`,borderRadius:20,padding:"6px 16px",cursor:"pointer",fontSize:12,fontWeight:fTag===t.id?600:400}}>{t.label}</button>)}</div>
     {!ents.length?<div style={{textAlign:"center",padding:40,color:T.textTer}}>暂无「{tO?.label}」记录</div>:<div style={{display:"flex",flexDirection:"column",gap:12}}>{ents.map(([d,e])=><EntryCard key={d} dk={d} e={e} hl={tO?.color} tags={tags}/>)}</div>}
   </>;
 }
@@ -144,7 +199,7 @@ function InsightMood({data,tags,fMood,sFMood}){
       <span style={{fontSize:24}}>{m.emoji}</span><span style={{fontSize:10,color:fMood===m.val?m.color:T.textTer,fontWeight:500}}>{m.label}</span>
       <span style={{fontSize:16,fontWeight:700,color:fMood===m.val?T.text:T.textTer}}>{Object.values(data).filter(v=>v.mood===m.val).length}</span>
     </button>)}</div>
-    {!ents.length?<div style={{textAlign:"center",padding:40,color:T.textTer}}>暂无「{mO?.label}」记录</div>:<div style={{display:"flex",flexDirection:"column",gap:12}}>{ents.map(([d,e])=><EntryCard key={d} dk={d} e={e} hl={mO?.color} tags={tags}/>)}</div>}
+    {!ents.length?<div style={{textAlign:"center",padding:40,color:T.textTer}}>暂无</div>:<div style={{display:"flex",flexDirection:"column",gap:12}}>{ents.map(([d,e])=><EntryCard key={d} dk={d} e={e} hl={mO?.color} tags={tags}/>)}</div>}
   </>;
 }
 function InsightDiary({data,tags}){
@@ -155,78 +210,25 @@ function InsightSummary({stats,tags,type}){
   const keys=Object.keys(type==="monthly"?stats.ms:stats.ys).sort().reverse();
   const[sel,sSel]=useState(keys[0]||"");
   const sm=(type==="monthly"?stats.ms:stats.ys)[sel];
-  const label=k=>{
-    if(type==="yearly")return k+"年";
-    if(type==="weekly"){
-      // key format: "2026-02-W06"
-      const m=k.split("-")[1];
-      const w=k.split("-W")[1];
-      return m+"月W"+w;
-    }
-    const[y,m]=k.split("-");return y+"年"+MO[parseInt(m)-1];
-  };
+  const label=k=>{if(type==="yearly")return k+"年";const[y,m]=k.split("-");return y+"年"+MO[parseInt(m)-1]};
   return <>
-    <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap",overflowX:"auto"}}>{keys.map(k=><button key={k} onClick={()=>sSel(k)} style={{background:sel===k?T.text:T.accentSoft,color:sel===k?"#fff":T.textSec,border:sel===k?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:sel===k?600:400,whiteSpace:"nowrap"}}>{label(k)}</button>)}</div>
+    <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>{keys.map(k=><button key={k} onClick={()=>sSel(k)} style={{background:sel===k?T.text:T.accentSoft,color:sel===k?"#fff":T.textSec,border:sel===k?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:sel===k?600:400,whiteSpace:"nowrap"}}>{label(k)}</button>)}</div>
     {!sm?<div style={{textAlign:"center",padding:40,color:T.textTer}}>暂无数据</div>:<SummaryCards sm={sm} tags={tags}/>}
   </>;
-}
-function SummaryCards({sm,tags}){
-  const cr=sm.totalTodos?Math.round(sm.doneTodos/sm.totalTodos*100):0;
-  return <div style={{display:"flex",flexDirection:"column",gap:14}}>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
-      <SC title="记录天数"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.count}<span style={{fontSize:13,color:T.textTer,fontWeight:400}}> 天</span></div></SC>
-      <SC title="平均心情"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.avgMood.toFixed(1)}<span style={{fontSize:16,marginLeft:4}}>{MOODS.find(m=>m.val===Math.round(sm.avgMood))?.emoji}</span></div></SC>
-      <SC title="平均评分"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.avgScore.toFixed(1)}<span style={{fontSize:13,color:T.textTer,fontWeight:400}}>/10</span></div></SC>
-      <SC title="完成率"><div style={{fontSize:26,fontWeight:700,color:cr>=70?"#059669":cr>=40?"#d97706":"#dc2626"}}>{cr}%</div><div style={{fontSize:11,color:T.textTer}}>{sm.doneTodos}/{sm.totalTodos}</div></SC>
-      <SC title="日记天数"><div style={{fontSize:26,fontWeight:700,color:T.text}}>{sm.diaryDays}</div></SC>
-    </div>
-    <SC title="心情分布"><MiniBar vals={sm.moodDist} colors={MOODS.map(m=>m.color)} labels={MOODS.map(m=>m.emoji)}/></SC>
-    <SC title="评分分布"><MiniBar vals={sm.scoreDist} colors={sm.scoreDist.map((_,i)=>i<3?"#dc2626":i<6?"#d97706":"#059669")} labels={[...Array(10)].map((_,i)=>`${i+1}`)}/></SC>
-    {sm.topTags.length>0&&<SC title="高频标签"><div style={{display:"flex",flexDirection:"column",gap:8}}>{sm.topTags.map(([tid,cnt],i)=>{const tg=tags.find(t=>t.id===tid);const mx=sm.topTags[0][1];return tg?<div key={tid} style={{display:"flex",alignItems:"center",gap:8}}>
-      <span style={{fontSize:12,color:T.textTer,width:16}}>#{i+1}</span><span style={{fontSize:14}}>{tg.icon}</span><span style={{fontSize:12,color:T.text,width:44,fontWeight:500}}>{tg.label}</span>
-      <div style={{flex:1,height:6,background:T.accentSoft,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${(cnt/mx)*100}%`,background:tg.color,borderRadius:3}}/></div>
-      <span style={{fontSize:11,color:T.textSec,width:20,textAlign:"right"}}>{cnt}</span>
-    </div>:null})}</div></SC>}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-      {sm.bestDay&&<SC title="🌟 最佳一天"><div style={{fontSize:13,fontWeight:600,color:"#059669"}}>{sm.bestDay.date}</div><div style={{fontSize:11,color:T.textSec,marginTop:3}}>{sm.bestDay.score}/10 {MOODS.find(m=>m.val===sm.bestDay.mood)?.emoji}</div></SC>}
-      {sm.worstDay&&<SC title="💪 需加油"><div style={{fontSize:13,fontWeight:600,color:"#d97706"}}>{sm.worstDay.date}</div><div style={{fontSize:11,color:T.textSec,marginTop:3}}>{sm.worstDay.score}/10 {MOODS.find(m=>m.val===sm.worstDay.mood)?.emoji}</div></SC>}
-    </div>
-  </div>;
-}
-
-function EntryCard({dk:dateKey,e,hl,tags:tgs=[]}){
-  const et=e.todos?[...new Set(e.todos.flatMap(t=>t.tags||[]))]:[];
-  return <div style={{background:T.card,borderRadius:T.radius,padding:18,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow,borderLeft:hl?`3px solid ${hl}`:"none"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-      <span style={{fontSize:14,fontWeight:600,color:T.text}}>{dateKey} <span style={{fontWeight:400,fontSize:12,color:T.textTer}}>{new Date(dateKey+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"short"})}</span></span>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {MOODS.find(m=>m.val===e.mood)&&<span style={{fontSize:16}}>{MOODS.find(m=>m.val===e.mood).emoji}</span>}
-        <span style={{background:T.accentSoft,borderRadius:6,padding:"2px 8px",fontSize:12,color:T.textSec,fontWeight:500}}>{e.score}/10</span>
-      </div>
-    </div>
-    {e.diary&&<div style={{margin:"4px 0 10px",fontSize:13,lineHeight:1.7,color:T.textSec,whiteSpace:"pre-wrap"}}>{e.diary}</div>}
-    {e.todos?.length>0&&<div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:8}}>
-      {e.todos.map((t,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:t.done?T.textTer:T.text}}>
-        <span>{t.done?"✅":"⬜"}</span><span style={{textDecoration:t.done?"line-through":"none"}}>{t.text}</span>
-      </div>)}
-    </div>}
-    {et.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-      {et.map(tid=>{const tg=tgs.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:10,background:`${tg.color}10`,color:tg.color,borderRadius:6,padding:"2px 8px",fontWeight:500}}>{tg.icon} {tg.label}</span>:null})}
-    </div>}
-  </div>;
 }
 
 /* ═══════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════ */
-export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,removeTodo,saveTodo,addTag,onSignOut,userEmail}){
+export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,removeTodo,saveTodo,addTag,onSignOut,userEmail,editTag,deleteTag}){
   const[yr,sYr]=useState(2026);const[mo,sMo]=useState(2);
   const[sel,sSel]=useState(null);
-  const[view,sView]=useState("calendar"); // calendar | insights
-  const[insightTab,sIT]=useState("tags"); // tags|mood|diary|weekly|monthly|yearly
+  const[view,sView]=useState("calendar");
+  const[insightTab,sIT]=useState("tags");
   const[fTag,sFTag]=useState(null);const[fMood,sFMood]=useState(4);
   const[eDiary,sEDiary]=useState(false);const[eNote,sENote]=useState(false);
-  const[showNT,sSNT]=useState(false);const[showAddTodo,sSAT]=useState(false);const[defaultPeriod,setDefaultPeriod]=useState("morning");
+  const[showMT,sSMT]=useState(false); // manage tags
+  const[showAddTodo,sSAT]=useState(false);const[defaultPeriod,setDefaultPeriod]=useState("morning");
   const[eTIdx,sETIdx]=useState(null);
   const[openP,sOpenP]=useState({morning:true,afternoon:true,evening:true});
   const[toasts,sToasts]=useState([]);
@@ -240,9 +242,8 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
   const entry=sel?data[sel]:null;
 
   const stats=useMemo(()=>{
-    const ents=Object.entries(data);const byM={};const byY={};const byW={};
-    ents.forEach(([k,v])=>{const[y,m]=k.split("-");const ym=`${y}-${m}`;if(!byM[ym])byM[ym]=[];byM[ym].push({date:k,...v});if(!byY[y])byY[y]=[];byY[y].push({date:k,...v});
-      const d=new Date(k+"T00:00:00");const wk=getWeekKey(d);if(!byW[wk])byW[wk]=[];byW[wk].push({date:k,...v})});
+    const ents=Object.entries(data);const byM={};const byY={};
+    ents.forEach(([k,v])=>{const[y,m]=k.split("-");const ym=`${y}-${m}`;if(!byM[ym])byM[ym]=[];byM[ym].push({date:k,...v});if(!byY[y])byY[y]=[];byY[y].push({date:k,...v})});
     const sum=arr=>{if(!arr.length)return null;
       const avgM=arr.reduce((s,e)=>s+(e.mood||0),0)/arr.length;const avgS=arr.reduce((s,e)=>s+(e.score||0),0)/arr.length;
       const tT=arr.reduce((s,e)=>s+(e.todos?.length||0),0);const dT=arr.reduce((s,e)=>s+(e.todos?.filter(t=>t.done).length||0),0);
@@ -255,11 +256,9 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
       return{count:arr.length,avgMood:avgM,avgScore:avgS,totalTodos:tT,doneTodos:dT,moodDist:md,scoreDist:sd,topTags:tt,bestDay:best,worstDay:worst,diaryDays:arr.filter(e=>e.diary?.trim()).length}};
     const ms={};Object.entries(byM).forEach(([k,v])=>{ms[k]=sum(v)});
     const ys={};Object.entries(byY).forEach(([k,v])=>{ys[k]=sum(v)});
-    const ws={};Object.entries(byW).forEach(([k,v])=>{ws[k]=sum(v)});
-    return{ms,ys,ws};
+    return{ms,ys};
   },[data]);
 
-  // Reminder checker
   useEffect(()=>{
     const iv=setInterval(()=>{const n=new Date();const nk=dkFn(n.getFullYear(),n.getMonth()+1,n.getDate());
       const hm=`${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
@@ -274,74 +273,66 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
   const handleToggle=i=>{toggleTodo(sel,i);sToasts(p=>p.filter(t=>!(t.todoKey===sel&&t.todoIdx===i)))};
   const handleRemove=i=>removeTodo(sel,i);
   const handleSaveTodo=(i,u)=>saveTodo(sel,i,u);
-  const getDots=dk2=>{const e=data[dk2];return e?.mood?MOODS.find(m=>m.val===e.mood)?.emoji:null};
   const getDateTags=dk2=>{const e=data[dk2];if(!e?.todos)return[];const s=new Set();e.todos.forEach(t=>t.tags?.forEach(tid=>s.add(tid)));return[...s].slice(0,3).map(tid=>tags.find(t=>t.id===tid)).filter(Boolean)};
   const dismissToast=id=>sToasts(p=>p.filter(x=>x.id!==id));
+  const todosByPeriod=(p)=>(entry?.todos||[]).map((t,i)=>({...t,_idx:i})).filter(t=>t.period===p);
+  const togP=p=>sOpenP(prev=>({...prev,[p]:!prev[p]}));
 
-  const GL=<><style>{`@keyframes slideDown{from{transform:translate(-50%,-40px);opacity:0}to{transform:translate(-50%,0);opacity:1}}@keyframes fadeUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}*{-webkit-tap-highlight-color:transparent}`}</style>{toasts.map(t=><Toast key={t.id} msg={`⏰ ${t.msg}`} onClose={()=>dismissToast(t.id)}/>)}</>;
-  const wrap={maxWidth:920,margin:"0 auto",padding:"16px 16px 80px"};
+  // Tag edit/delete handlers
+  const handleEditTag=editTag||(()=>{});
+  const handleDeleteTag=deleteTag||(()=>{});
 
-  // ── NAV: 日历 | 洞见 | +标签 | 账号+登出
-  const Nav=()=><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:8}}>
+  const GL=<><style>{`@keyframes slideDown{from{transform:translate(-50%,-40px);opacity:0}to{transform:translate(-50%,0);opacity:1}}@keyframes fadeUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}*{-webkit-tap-highlight-color:transparent}`}</style>{toasts.map(t=><Toast key={t.id} msg={`⏰ ${t.msg}`} onClose={()=>dismissToast(t.id)}/>)}</>;
+
+  // ── NAV (shared across all views including detail modal)
+  const Nav=({showBack,onBack}={})=><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",flexWrap:"wrap",gap:8,background:T.bg,borderBottom:`1px solid ${T.divider}`,position:"sticky",top:0,zIndex:10}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
-      <h1 onClick={()=>{sView("calendar");sSel(null)}} style={{margin:0,fontSize:22,fontWeight:700,color:T.text,cursor:"pointer",letterSpacing:"-0.02em"}}>LifeLog</h1>
+      {showBack&&<button onClick={onBack} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:14,fontWeight:500}}>← 返回</button>}
+      {!showBack&&<h1 onClick={()=>{sView("calendar");sSel(null)}} style={{margin:0,fontSize:20,fontWeight:700,color:T.text,cursor:"pointer",letterSpacing:"-0.02em"}}>LifeLog</h1>}
       <div style={{display:"flex",gap:4}}>
         {[{id:"calendar",l:"📅 日历"},{id:"insights",l:"💡 洞见"}].map(v=>
-          <button key={v.id} onClick={()=>sView(v.id)} style={{background:view===v.id?T.text:T.accentSoft,color:view===v.id?"#fff":T.textSec,border:view===v.id?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:12,fontWeight:view===v.id?600:400}}>{v.l}</button>
+          <button key={v.id} onClick={()=>{sView(v.id);sSel(null)}} style={{background:view===v.id&&!sel?T.text:T.accentSoft,color:view===v.id&&!sel?"#fff":T.textSec,border:view===v.id&&!sel?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:12,fontWeight:view===v.id&&!sel?600:400}}>{v.l}</button>
         )}
-        <button onClick={()=>sSNT(true)} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,color:T.textSec,borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:12}}>+ 标签</button>
+        <button onClick={()=>sSMT(true)} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,color:T.textSec,borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:12}}>🏷 标签</button>
       </div>
     </div>
     <div style={{display:"flex",alignItems:"center",gap:6}}>
-      {userEmail&&<span style={{fontSize:11,color:T.textTer,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{userEmail}</span>}
-      {onSignOut&&<button onClick={onSignOut} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,color:T.textTer,borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:12}}>登出</button>}
+      {userEmail&&<span style={{fontSize:11,color:T.textTer,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{userEmail}</span>}
+      {onSignOut&&<button onClick={onSignOut} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,color:T.textTer,borderRadius:20,padding:"5px 10px",cursor:"pointer",fontSize:11}}>登出</button>}
     </div>
   </div>;
 
   // ── INSIGHTS VIEW
-  if(view==="insights"){
+  if(view==="insights"&&!sel){
     const tabs=[{id:"tags",l:"🏷️ 标签"},{id:"mood",l:"😊 心情"},{id:"diary",l:"📓 日记"},{id:"monthly",l:"📊 月"},{id:"yearly",l:"📈 年"}];
     return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
-      {showNT&&<NewTagModal onClose={()=>sSNT(false)} onCreate={t=>addTag(t)}/>}
-      <div style={wrap}><Nav/>
+      {showMT&&<ManageTagsModal tags={tags} onClose={()=>sSMT(false)} onAdd={addTag} onEdit={handleEditTag} onDelete={handleDeleteTag}/>}
+      <Nav/><div style={{maxWidth:920,margin:"0 auto",padding:"16px 16px 80px"}}>
         <div style={{display:"flex",gap:4,marginBottom:20,overflowX:"auto"}}>
           {tabs.map(t=><button key={t.id} onClick={()=>sIT(t.id)} style={{background:insightTab===t.id?T.text:T.accentSoft,color:insightTab===t.id?"#fff":T.textSec,border:insightTab===t.id?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:insightTab===t.id?600:400,whiteSpace:"nowrap"}}>{t.l}</button>)}
         </div>
         {insightTab==="tags"&&<InsightTags data={data} tags={tags} fTag={fTag} sFTag={sFTag}/>}
         {insightTab==="mood"&&<InsightMood data={data} tags={tags} fMood={fMood} sFMood={sFMood}/>}
         {insightTab==="diary"&&<InsightDiary data={data} tags={tags}/>}
-        {insightTab==="weekly"&&<InsightSummary stats={stats} tags={tags} type="weekly"/>}
         {insightTab==="monthly"&&<InsightSummary stats={stats} tags={tags} type="monthly"/>}
         {insightTab==="yearly"&&<InsightSummary stats={stats} tags={tags} type="yearly"/>}
       </div>
     </div>;
   }
 
-  // ── CALENDAR VIEW
-  const todosByPeriod=(p)=>(entry?.todos||[]).map((t,i)=>({...t,_idx:i})).filter(t=>t.period===p);
-  const togP=p=>sOpenP(prev=>({...prev,[p]:!prev[p]}));
-
-  return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
-    {showNT&&<NewTagModal onClose={()=>sSNT(false)} onCreate={t=>addTag(t)}/>}
-    {showAddTodo&&<AddTodoModal tags={tags} defaultPeriod={defaultPeriod} onAdd={handleAddTodo} onClose={()=>sSAT(false)}/>}
-    {eTIdx!==null&&entry?.todos?.[eTIdx]&&<EditTodoModal todo={entry.todos[eTIdx]} tags={tags} onSave={u=>handleSaveTodo(eTIdx,u)} onClose={()=>sETIdx(null)}/>}
-
-    {/* ═══ Day Detail Fullscreen Modal ═══ */}
-    {sel&&<div style={{position:"fixed",inset:0,zIndex:900,background:T.bg,overflowY:"auto",animation:"fadeUp .25s ease-out"}}>
-      {/* Modal Header */}
-      <div style={{position:"sticky",top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.divider}`,padding:"12px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <button onClick={()=>{sSel(null);sEDiary(false);sENote(false);sETIdx(null)}} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:14,fontWeight:500,display:"flex",alignItems:"center",gap:4}}>
-          ← 返回
-        </button>
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:16,fontWeight:700,color:T.text}}>{sel}</div>
-          <div style={{fontSize:12,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:6}}>· 今天</span>}</div>
+  // ── DAY DETAIL (fullscreen)
+  if(sel){
+    return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
+      {showMT&&<ManageTagsModal tags={tags} onClose={()=>sSMT(false)} onAdd={addTag} onEdit={handleEditTag} onDelete={handleDeleteTag}/>}
+      {showAddTodo&&<AddTodoModal tags={tags} defaultPeriod={defaultPeriod} onAdd={handleAddTodo} onClose={()=>sSAT(false)}/>}
+      {eTIdx!==null&&entry?.todos?.[eTIdx]&&<EditTodoModal todo={entry.todos[eTIdx]} tags={tags} onSave={u=>handleSaveTodo(eTIdx,u)} onClose={()=>sETIdx(null)}/>}
+      <Nav showBack onBack={()=>{sSel(null);sEDiary(false);sENote(false);sETIdx(null)}}/>
+      <div style={{maxWidth:600,margin:"0 auto",padding:"16px 20px 100px"}}>
+        {/* Date title */}
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:22,fontWeight:700,color:T.text}}>{sel}</div>
+          <div style={{fontSize:13,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:6}}>· 今天</span>}</div>
         </div>
-        <div style={{width:50}}/>
-      </div>
-
-      {/* Modal Body */}
-      <div style={{maxWidth:600,margin:"0 auto",padding:"20px 20px 100px"}}>
         {/* 📝 随手记 */}
         <div style={{marginBottom:28}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -351,15 +342,11 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
           {eNote?<textarea value={entry?.note||""} onChange={e=>updateEntry(sel,{note:e.target.value})} placeholder="随便写点什么..." style={{width:"100%",minHeight:80,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radius,padding:14,color:T.text,fontSize:15,lineHeight:1.7,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
           :<div onClick={()=>sENote(true)} style={{background:T.accentSoft,borderRadius:T.radius,padding:16,minHeight:44,cursor:"pointer",fontSize:15,lineHeight:1.7,color:entry?.note?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.note||"点击随手记录..."}</div>}
         </div>
-
-        {/* ✅ 待办事项 */}
+        {/* ✅ 待办 */}
         <div style={{marginBottom:28}}>
-          <div style={{marginBottom:12}}>
-            <span style={{fontSize:16,color:T.text,fontWeight:600}}>✅ 待办事项 {entry?.todos?.length>0&&<span style={{color:T.textTer,fontWeight:400,fontSize:14}}>{entry.todos.filter(t=>t.done).length}/{entry.todos.length}</span>}</span>
-          </div>
+          <div style={{marginBottom:12}}><span style={{fontSize:16,color:T.text,fontWeight:600}}>✅ 待办事项 {entry?.todos?.length>0&&<span style={{color:T.textTer,fontWeight:400,fontSize:14}}>{entry.todos.filter(t=>t.done).length}/{entry.todos.length}</span>}</span></div>
           {PERIODS.map(pd=>{
-            const items=todosByPeriod(pd.id);
-            const isOpen=openP[pd.id];
+            const items=todosByPeriod(pd.id);const isOpen=openP[pd.id];
             return <div key={pd.id} style={{marginBottom:12}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",cursor:"pointer"}} onClick={()=>togP(pd.id)}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -369,7 +356,7 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
                 </div>
                 <button onClick={e=>{e.stopPropagation();sSAT(true);setDefaultPeriod(pd.id)}} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:16,color:T.textSec,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
               </div>
-              {isOpen&&items.length>0&&<div style={{display:"flex",flexDirection:"column",gap:6,marginLeft:4}}>
+              {isOpen&&items.length>0&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {items.map(todo=><div key={todo.id||todo._idx} style={{background:T.accentSoft,borderRadius:T.radius,padding:"12px 14px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:12}}>
                     <button onClick={()=>handleToggle(todo._idx)} style={{width:22,height:22,borderRadius:7,border:todo.done?"none":`1.5px solid ${T.textTer}`,background:todo.done?T.text:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,flexShrink:0}}>{todo.done&&"✓"}</button>
@@ -378,15 +365,14 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
                     <button onClick={()=>sETIdx(todo._idx)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:13}}>✏️</button>
                     <button onClick={()=>handleRemove(todo._idx)} style={{background:"none",border:"none",color:T.textTer,cursor:"pointer",fontSize:16}}>×</button>
                   </div>
-                  {todo.tags?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8,marginLeft:34}}>{todo.tags.map(tid=>{const tg=tags.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:11,background:`${tg.color}10`,color:tg.color,borderRadius:6,padding:"2px 10px",fontWeight:500}}>{tg.icon} {tg.label}</span>:null})}</div>}
+                  {todo.tags?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8,marginLeft:34}}>{todo.tags.map(tid=>{const tg=tags.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:12,background:`${tg.color}15`,color:tg.color,borderRadius:8,padding:"3px 10px",fontWeight:600,border:`1px solid ${tg.color}30`}}>{tg.label}</span>:null})}</div>}
                 </div>)}
               </div>}
             </div>
           })}
           {!(entry?.todos?.length)&&<div style={{textAlign:"center",padding:24,color:T.textTer,fontSize:14}}>点击时段旁的 + 创建待办</div>}
         </div>
-
-        {/* 📓 日记/总结 */}
+        {/* 📓 日记 */}
         <div style={{marginBottom:28}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <span style={{fontSize:16,color:T.text,fontWeight:600}}>📓 日记 / 总结</span>
@@ -395,18 +381,15 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
           {eDiary?<textarea value={entry?.diary||""} onChange={e=>updateEntry(sel,{diary:e.target.value})} placeholder="记录今天的总结..." style={{width:"100%",minHeight:120,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radius,padding:14,color:T.text,fontSize:15,lineHeight:1.8,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
           :<div onClick={()=>sEDiary(true)} style={{background:T.accentSoft,borderRadius:T.radius,padding:16,minHeight:60,cursor:"pointer",fontSize:15,lineHeight:1.8,color:entry?.diary?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.diary||"点击写日记..."}</div>}
         </div>
-
         {/* 心情 */}
         <div style={{marginBottom:28}}>
           <div style={{fontSize:14,color:T.textTer,marginBottom:10,fontWeight:500}}>今日心情</div>
           <div style={{display:"flex",gap:8}}>{MOODS.map(m=><button key={m.val} onClick={()=>updateEntry(sel,{mood:m.val})} style={{
             flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,
-            background:entry?.mood===m.val?T.card:T.accentSoft,
-            border:entry?.mood===m.val?`2px solid ${m.color}`:`1px solid ${T.divider}`,
+            background:entry?.mood===m.val?T.card:T.accentSoft,border:entry?.mood===m.val?`2px solid ${m.color}`:`1px solid ${T.divider}`,
             borderRadius:T.radius,padding:"14px 4px",cursor:"pointer",boxShadow:entry?.mood===m.val?T.shadowMd:"none",
           }}><span style={{fontSize:26}}>{m.emoji}</span><span style={{fontSize:12,color:entry?.mood===m.val?m.color:T.textTer,fontWeight:500}}>{m.label}</span></button>)}</div>
         </div>
-
         {/* 评分 */}
         <div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -416,49 +399,45 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
           <input type="range" min="1" max="10" value={entry?.score||6} onChange={e=>updateEntry(sel,{score:parseInt(e.target.value)})} style={{width:"100%",accentColor:T.text}}/>
         </div>
       </div>
-    </div>}
+    </div>;
+  }
 
-    <div style={wrap}><Nav/>
-      {/* Calendar - now full width */}
-      <div style={{maxWidth:500,margin:"0 auto"}}>
-        <div style={{background:T.card,borderRadius:16,padding:22,border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-            <button onClick={prev} style={{background:"none",border:"none",color:T.textSec,fontSize:20,cursor:"pointer",padding:"4px 12px"}}>‹</button>
-            <h2 style={{margin:0,fontSize:18,fontWeight:600,color:T.text}}>{yr} {MO[mo-1]}</h2>
-            <button onClick={next} style={{background:"none",border:"none",color:T.textSec,fontSize:20,cursor:"pointer",padding:"4px 12px"}}>›</button>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:6}}>
-            {WK.map(d=><div key={d} style={{textAlign:"center",fontSize:12,color:T.textTer,padding:4,fontWeight:500}}>{d}</div>)}
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
-            {Array(fd).fill(0).map((_,i)=><div key={`b${i}`}/>)}
-            {Array.from({length:dim},(_,i)=>i+1).map(d=>{
-              const dK=dkFn(yr,mo,d);const isT=dK===todayK;const has=!!data[dK];
-              const mE=getDots(dK);
-              const dateTags=getDateTags(dK);
-              return <button key={d} onClick={()=>{sSel(dK);sEDiary(false);sENote(false);sETIdx(null);sOpenP({morning:true,afternoon:true,evening:true})}} style={{
-                position:"relative",aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
-                background:has?T.accentSoft:"transparent",
-                border:isT?`2px solid ${T.text}`:"1.5px solid transparent",
-                borderRadius:12,cursor:"pointer",color:has?T.text:T.textTer,
-                fontSize:14,fontWeight:isT?700:has?500:400,transition:"all .15s",
-              }}><span>{d}</span>
-                {mE&&<span style={{fontSize:10,lineHeight:1}}>{mE}</span>}
-                {dateTags.length>0&&<div style={{display:"flex",gap:2,position:"absolute",bottom:3}}>
-                  {dateTags.map((tg,i)=><div key={i} style={{width:5,height:5,borderRadius:"50%",background:tg.color}}/>)}
-                </div>}
-              </button>
-            })}
-          </div>
+  // ── CALENDAR VIEW
+  return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
+    {showMT&&<ManageTagsModal tags={tags} onClose={()=>sSMT(false)} onAdd={addTag} onEdit={handleEditTag} onDelete={handleDeleteTag}/>}
+    <Nav/><div style={{padding:"8px 12px 80px"}}>
+      <div style={{background:T.card,borderRadius:16,padding:"16px 10px",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadow}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,padding:"0 8px"}}>
+          <button onClick={prev} style={{background:"none",border:"none",color:T.textSec,fontSize:22,cursor:"pointer",padding:"4px 12px"}}>‹</button>
+          <h2 style={{margin:0,fontSize:18,fontWeight:600,color:T.text}}>{yr} {MO[mo-1]}</h2>
+          <button onClick={next} style={{background:"none",border:"none",color:T.textSec,fontSize:22,cursor:"pointer",padding:"4px 12px"}}>›</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:4,padding:"0 4px"}}>
+          {WK.map(d=><div key={d} style={{textAlign:"center",fontSize:12,color:T.textTer,padding:4,fontWeight:500}}>{d}</div>)}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,padding:"0 4px"}}>
+          {Array(fd).fill(0).map((_,i)=><div key={`b${i}`}/>)}
+          {Array.from({length:dim},(_,i)=>i+1).map(d=>{
+            const dK=dkFn(yr,mo,d);const isT=dK===todayK;const has=!!data[dK];
+            const mE=has&&data[dK].mood?MOODS.find(m=>m.val===data[dK].mood)?.emoji:null;
+            const dateTags=getDateTags(dK);
+            return <button key={d} onClick={()=>{sSel(dK);sEDiary(false);sENote(false);sETIdx(null);sOpenP({morning:true,afternoon:true,evening:true})}} style={{
+              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",
+              paddingTop:6,gap:2,minHeight:56,
+              background:has?T.accentSoft:"transparent",
+              border:isT?`2px solid ${T.text}`:"1.5px solid transparent",
+              borderRadius:10,cursor:"pointer",color:has?T.text:T.textTer,
+              fontSize:14,fontWeight:isT?700:has?500:400,transition:"all .15s",
+            }}>
+              <span>{d}</span>
+              {mE&&<span style={{fontSize:11,lineHeight:1}}>{mE}</span>}
+              {dateTags.length>0&&<div style={{display:"flex",gap:2,marginTop:1}}>
+                {dateTags.map((tg,i)=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:tg.color}}/>)}
+              </div>}
+            </button>
+          })}
         </div>
       </div>
     </div>
   </div>;
-}
-
-function getWeekKey(date){
-  const d=new Date(date);
-  const onejan=new Date(d.getFullYear(),0,1);
-  const weekNum=Math.ceil(((d-onejan)/86400000+onejan.getDay()+1)/7);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-W${String(weekNum).padStart(2,"0")}`;
 }

@@ -64,8 +64,10 @@ function useLocalData() {
   }, [])
 
   const addTag = useCallback((tag) => setTags(prev => [...prev, tag]), [])
+  const editTag = useCallback((updated) => setTags(prev => prev.map(t => t.id === updated.id ? { ...t, label: updated.label, color: updated.color } : t)), [])
+  const deleteTag = useCallback((tagId) => setTags(prev => prev.filter(t => t.id !== tagId)), [])
 
-  return { data, tags, loading: false, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag }
+  return { data, tags, loading: false, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag, editTag, deleteTag }
 }
 
 export default function App() {

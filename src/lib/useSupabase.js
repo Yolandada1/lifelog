@@ -163,8 +163,20 @@ export function useLifeLogData(user) {
   const addTag = useCallback(async (tag) => {
     setTags(prev => [...prev, tag])
     if (supabase && user)
-      await supabase.from('tags').insert({ id: tag.id, user_id: user.id, label: tag.label, color: tag.color, icon: tag.icon })
+      await supabase.from('tags').insert({ id: tag.id, user_id: user.id, label: tag.label, color: tag.color, icon: tag.icon || '' })
   }, [user])
 
-  return { data, tags, loading, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag }
+  const editTag = useCallback(async (updated) => {
+    setTags(prev => prev.map(t => t.id === updated.id ? { ...t, label: updated.label, color: updated.color } : t))
+    if (supabase && user)
+      await supabase.from('tags').update({ label: updated.label, color: updated.color }).eq('id', updated.id).eq('user_id', user.id)
+  }, [user])
+
+  const deleteTag = useCallback(async (tagId) => {
+    setTags(prev => prev.filter(t => t.id !== tagId))
+    if (supabase && user)
+      await supabase.from('tags').delete().eq('id', tagId).eq('user_id', user.id)
+  }, [user])
+
+  return { data, tags, loading, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag, editTag, deleteTag }
 }
