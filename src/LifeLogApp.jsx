@@ -30,7 +30,6 @@ const T={bg:"#fafaf9",card:"#ffffff",cardBorder:"#e7e5e4",text:"#1c1917",textSec
 
 /* ═══ Small Components ═══ */
 function Toast({msg,onClose}){
-  useEffect(()=>{const t=setTimeout(onClose,6000);return()=>clearTimeout(t)},[onClose]);
   return <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:9999,background:T.text,color:"#fff",borderRadius:T.radius,padding:"12px 20px",boxShadow:T.shadowMd,display:"flex",alignItems:"center",gap:10,fontSize:13,maxWidth:"90vw",animation:"slideDown .3s ease-out"}}>
     <span style={{fontSize:18}}>🔔</span><span style={{flex:1}}>{msg}</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:14,opacity:.6}}>×</button>
   </div>;
@@ -67,8 +66,8 @@ function NewTagModal({onClose,onCreate}){
 }
 
 /* ═══ Add Todo Modal - 添加时就可以选标签/提醒/时段 ═══ */
-function AddTodoModal({tags,onAdd,onClose}){
-  const[t,sT]=useState("");const[st,sST]=useState([]);const[r,sR]=useState("");const[p,sP]=useState("morning");
+function AddTodoModal({tags,defaultPeriod,onAdd,onClose}){
+  const[t,sT]=useState("");const[st,sST]=useState([]);const[r,sR]=useState("");const[p,sP]=useState(defaultPeriod||"morning");
   const tog=id=>sST(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
   return <Modal onClose={onClose}><div style={{background:T.card,borderRadius:16,padding:28,width:"min(380px,calc(100vw - 32px))",border:`1px solid ${T.cardBorder}`,boxShadow:T.shadowMd,maxHeight:"85vh",overflowY:"auto"}}>
     <h3 style={{margin:"0 0 16px",fontSize:16,color:T.text,fontWeight:600}}>添加待办</h3>
@@ -156,7 +155,11 @@ function InsightSummary({stats,tags,type}){
   const keys=Object.keys(type==="monthly"?stats.ms:stats.ys).sort().reverse();
   const[sel,sSel]=useState(keys[0]||"");
   const sm=(type==="monthly"?stats.ms:stats.ys)[sel];
-  const label=k=>{if(type==="yearly")return k+"年";const[y,m]=k.split("-");return y+"年"+MO[parseInt(m)-1]};
+  const label=k=>{
+    if(type==="yearly")return k+"年";
+    if(type==="weekly"){const parts=k.split("-");return parts[1]+"月"+parts[2]}
+    const[y,m]=k.split("-");return y+"年"+MO[parseInt(m)-1]
+  };
   return <>
     <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap",overflowX:"auto"}}>{keys.map(k=><button key={k} onClick={()=>sSel(k)} style={{background:sel===k?T.text:T.accentSoft,color:sel===k?"#fff":T.textSec,border:sel===k?"none":`1px solid ${T.divider}`,borderRadius:20,padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:sel===k?600:400,whiteSpace:"nowrap"}}>{label(k)}</button>)}</div>
     {!sm?<div style={{textAlign:"center",padding:40,color:T.textTer}}>暂无数据</div>:<SummaryCards sm={sm} tags={tags}/>}
@@ -218,7 +221,7 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
   const[insightTab,sIT]=useState("tags"); // tags|mood|diary|weekly|monthly|yearly
   const[fTag,sFTag]=useState(null);const[fMood,sFMood]=useState(4);
   const[eDiary,sEDiary]=useState(false);const[eNote,sENote]=useState(false);
-  const[showNT,sSNT]=useState(false);const[showAddTodo,sSAT]=useState(false);
+  const[showNT,sSNT]=useState(false);const[showAddTodo,sSAT]=useState(false);const[defaultPeriod,setDefaultPeriod]=useState("morning");
   const[eTIdx,sETIdx]=useState(null);
   const[toasts,sToasts]=useState([]);
   const fired=useRef(new Set());
@@ -309,10 +312,12 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
 
   // ── CALENDAR VIEW
   const todosByPeriod=(p)=>(entry?.todos||[]).map((t,i)=>({...t,_idx:i})).filter(t=>t.period===p);
+  const[openP,sOpenP]=useState({morning:true,afternoon:true,evening:true});
+  const togP=p=>sOpenP(prev=>({...prev,[p]:!prev[p]}));
 
   return <div style={{minHeight:"100vh",background:T.bg}}>{GL}
     {showNT&&<NewTagModal onClose={()=>sSNT(false)} onCreate={t=>addTag(t)}/>}
-    {showAddTodo&&<AddTodoModal tags={tags} onAdd={handleAddTodo} onClose={()=>sSAT(false)}/>}
+    {showAddTodo&&<AddTodoModal tags={tags} defaultPeriod={defaultPeriod} onAdd={handleAddTodo} onClose={()=>sSAT(false)}/>}
     {eTIdx!==null&&entry?.todos?.[eTIdx]&&<EditTodoModal todo={entry.todos[eTIdx]} tags={tags} onSave={u=>handleSaveTodo(eTIdx,u)} onClose={()=>sETIdx(null)}/>}
     <div style={wrap}><Nav/>
       <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
@@ -371,14 +376,20 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
             <div style={{marginBottom:20}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <span style={{fontSize:13,color:T.text,fontWeight:500}}>✅ 待办事项 {entry?.todos?.length>0&&<span style={{color:T.textTer,fontWeight:400}}>{entry.todos.filter(t=>t.done).length}/{entry.todos.length}</span>}</span>
-                <button onClick={()=>sSAT(true)} style={{background:T.text,border:"none",borderRadius:T.radiusSm,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>+ 添加</button>
               </div>
               {PERIODS.map(pd=>{
                 const items=todosByPeriod(pd.id);
-                if(!items.length&&!(entry?.todos?.length))return null;
-                return <div key={pd.id} style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:T.textTer,fontWeight:500,marginBottom:6}}>{pd.label}</div>
-                  <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                const isOpen=openP[pd.id];
+                return <div key={pd.id} style={{marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",cursor:"pointer"}} onClick={()=>togP(pd.id)}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:10,color:T.textTer,transition:"transform .2s",transform:isOpen?"rotate(90deg)":"rotate(0deg)"}}>▶</span>
+                      <span style={{fontSize:14,color:T.text,fontWeight:600}}>{pd.label}</span>
+                      <span style={{fontSize:12,color:T.textTer}}>{items.length}</span>
+                    </div>
+                    <button onClick={e=>{e.stopPropagation();sSAT(true);setDefaultPeriod(pd.id)}} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:14,color:T.textSec,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                  </div>
+                  {isOpen&&items.length>0&&<div style={{display:"flex",flexDirection:"column",gap:5,marginLeft:4}}>
                     {items.map(todo=><div key={todo.id||todo._idx} style={{background:T.accentSoft,borderRadius:10,padding:"10px 12px"}}>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
                         <button onClick={()=>handleToggle(todo._idx)} style={{width:20,height:20,borderRadius:6,border:todo.done?"none":`1.5px solid ${T.textTer}`,background:todo.done?T.text:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:11,flexShrink:0}}>{todo.done&&"✓"}</button>
@@ -389,10 +400,10 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
                       </div>
                       {todo.tags?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6,marginLeft:30}}>{todo.tags.map(tid=>{const tg=tags.find(x=>x.id===tid);return tg?<span key={tid} style={{fontSize:10,background:`${tg.color}10`,color:tg.color,borderRadius:6,padding:"2px 8px",fontWeight:500}}>{tg.icon} {tg.label}</span>:null})}</div>}
                     </div>)}
-                  </div>
+                  </div>}
                 </div>
               })}
-              {!(entry?.todos?.length)&&<div style={{textAlign:"center",padding:20,color:T.textTer,fontSize:13}}>点击「+ 添加」创建待办</div>}
+              {!(entry?.todos?.length)&&<div style={{textAlign:"center",padding:20,color:T.textTer,fontSize:13}}>点击时段旁的 + 创建待办</div>}
             </div>
 
             {/* 📓 日记/总结 */}
@@ -432,7 +443,8 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
 }
 
 function getWeekKey(date){
-  const d=new Date(date);const day=d.getDay();const diff=d.getDate()-day;
-  const sun=new Date(d.setDate(diff));
-  return `${sun.getFullYear()}-W${String(Math.ceil((sun.getDate()+sun.getDay())/7)).padStart(2,"0")}-${String(sun.getMonth()+1).padStart(2,"0")}-${String(sun.getDate()).padStart(2,"0")}`;
+  const d=new Date(date);
+  const onejan=new Date(d.getFullYear(),0,1);
+  const weekNum=Math.ceil(((d-onejan)/86400000+onejan.getDay()+1)/7);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-W${String(weekNum).padStart(2,"0")}`;
 }

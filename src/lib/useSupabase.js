@@ -4,12 +4,7 @@ import { supabase } from './supabase'
 const DEFAULT_TAGS = [
   { id:'work',label:'工作',color:'#2563eb',icon:'💼' },
   { id:'study',label:'学习',color:'#7c3aed',icon:'📚' },
-  { id:'health',label:'健康',color:'#059669',icon:'💪' },
-  { id:'social',label:'社交',color:'#d97706',icon:'👥' },
-  { id:'hobby',label:'爱好',color:'#db2777',icon:'🎨' },
   { id:'life',label:'生活',color:'#6366f1',icon:'🏠' },
-  { id:'finance',label:'财务',color:'#0d9488',icon:'💰' },
-  { id:'travel',label:'旅行',color:'#ea580c',icon:'✈️' },
 ]
 
 export function useAuth() {
