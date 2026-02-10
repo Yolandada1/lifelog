@@ -38,6 +38,7 @@ export function useAuth() {
 export function useLifeLogData(user) {
   const [data, setData] = useState({})
   const [tags, setTags] = useState(DEFAULT_TAGS)
+  const [stickyNotes, setStickyNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const saveTimer = useRef(null)
 
@@ -60,6 +61,9 @@ export function useLifeLogData(user) {
 
       const { data: entries } = await supabase.from('entries').select('*').eq('user_id', user.id)
       const { data: todos } = await supabase.from('todos').select('*').eq('user_id', user.id).order('sort_order', { ascending: true })
+      const { data: stickies } = await supabase.from('sticky_notes').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
+
+      if (stickies) setStickyNotes(stickies.map(s => ({ id: s.id, text: s.text, color: s.color })))
 
       const merged = {}
       entries?.forEach(e => {
@@ -178,5 +182,23 @@ export function useLifeLogData(user) {
       await supabase.from('tags').delete().eq('id', tagId).eq('user_id', user.id)
   }, [user])
 
-  return { data, tags, loading, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag, editTag, deleteTag }
+  const addStickyNote = useCallback(async (note) => {
+    setStickyNotes(prev => [...prev, note])
+    if (supabase && user)
+      await supabase.from('sticky_notes').insert({ id: note.id, user_id: user.id, text: note.text, color: note.color })
+  }, [user])
+
+  const updateStickyNote = useCallback(async (id, text) => {
+    setStickyNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n))
+    if (supabase && user)
+      await supabase.from('sticky_notes').update({ text }).eq('id', id).eq('user_id', user.id)
+  }, [user])
+
+  const deleteStickyNote = useCallback(async (id) => {
+    setStickyNotes(prev => prev.filter(n => n.id !== id))
+    if (supabase && user)
+      await supabase.from('sticky_notes').delete().eq('id', id).eq('user_id', user.id)
+  }, [user])
+
+  return { data, tags, stickyNotes, loading, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag, editTag, deleteTag, addStickyNote, updateStickyNote, deleteStickyNote }
 }

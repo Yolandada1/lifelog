@@ -67,7 +67,12 @@ function useLocalData() {
   const editTag = useCallback((updated) => setTags(prev => prev.map(t => t.id === updated.id ? { ...t, label: updated.label, color: updated.color } : t)), [])
   const deleteTag = useCallback((tagId) => setTags(prev => prev.filter(t => t.id !== tagId)), [])
 
-  return { data, tags, loading: false, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag, editTag, deleteTag }
+  const [stickyNotes, setStickyNotes] = useState([])
+  const addStickyNote = useCallback((note) => setStickyNotes(prev => [...prev, note]), [])
+  const updateStickyNote = useCallback((id, text) => setStickyNotes(prev => prev.map(n => n.id === id ? { ...n, text } : n)), [])
+  const deleteStickyNote = useCallback((id) => setStickyNotes(prev => prev.filter(n => n.id !== id)), [])
+
+  return { data, tags, stickyNotes, loading: false, updateEntry, addTodo, toggleTodo, removeTodo, saveTodo, addTag, editTag, deleteTag, addStickyNote, updateStickyNote, deleteStickyNote }
 }
 
 export default function App() {

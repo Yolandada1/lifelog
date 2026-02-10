@@ -1,15 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 
-const EMOJIS={
-  "常用":["📌","🔖","⭐","🎯","📎","🔔","💡","🚀","❤️","✅","🔥","💎","🎉","👍","💬","📝"],
-  "表情":["😀","😂","🥰","😎","🤔","😴","🤩","🥳","😇","🤗","😤","🫡","🧐","🤓","😈","👻"],
-  "动物":["🐱","🐶","🐼","🦊","🐸","🐵","🦁","🐯","🐰","🐻","🐨","🐮","🐷","🐔","🐙","🦋"],
-  "食物":["🍔","🍕","🍜","🍣","🍩","🍰","🧁","☕","🍷","🥗","🍎","🍓","🥑","🌮","🍦","🧋"],
-  "运动":["⚽","🏀","🎾","🏋️","🧘","🚴","🏃","🏊","⛷️","🥊","🎯","🏌️","🤸","🧗","🏄","🛹"],
-  "旅行":["✈️","🚗","🚀","🏖️","⛰️","🗼","🏕️","🎡","🚢","🗺️","🧳","🌍","🏝️","🚂","🌅","🏔️"],
-  "物品":["💼","📚","💰","🏠","🎨","🎵","📷","💻","🎮","📱","🔧","🎁","💊","🛒","📦","🧪"],
-  "自然":["🌸","🌿","🌈","🌙","☀️","❄️","🌊","🍂","🌻","🌴","🍀","💐","🌺","🌵","🪴","✨"],
-};
 const TAG_COLORS=["#2563eb","#9333ea","#059669","#dc2626","#d97706","#db2777","#0891b2","#ea580c","#4f46e5","#16a34a","#e11d48","#ca8a04"];
 const MOODS=[
   {val:1,emoji:"🤬",label:"生气",color:"#dc2626"},
@@ -220,7 +210,7 @@ function InsightSummary({stats,tags,type}){
 /* ═══════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════ */
-export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,removeTodo,saveTodo,addTag,onSignOut,userEmail,editTag,deleteTag}){
+export default function LifeLogApp({data,tags,stickyNotes,updateEntry,addTodo,toggleTodo,removeTodo,saveTodo,addTag,onSignOut,userEmail,editTag,deleteTag,addStickyNote,updateStickyNote,deleteStickyNote}){
   const[yr,sYr]=useState(2026);const[mo,sMo]=useState(2);
   const[sel,sSel]=useState(null);
   const[view,sView]=useState("calendar");
@@ -230,8 +220,9 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
   const[showMT,sSMT]=useState(false); // manage tags
   const[showAddTodo,sSAT]=useState(false);const[defaultPeriod,setDefaultPeriod]=useState("morning");
   const[eTIdx,sETIdx]=useState(null);
-  const[openP,sOpenP]=useState({morning:true,afternoon:true,evening:true});
+  const[openP,sOpenP]=useState({morning:false,afternoon:false,evening:false});
   const[toasts,sToasts]=useState([]);
+  const STICKY_COLORS=["#fef9c3","#dbeafe","#fce7f3","#d1fae5","#ede9fe","#ffedd5"];
   const fired=useRef(new Set());
 
   const now=new Date();
@@ -333,15 +324,6 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
           <div style={{fontSize:22,fontWeight:700,color:T.text}}>{sel}</div>
           <div style={{fontSize:13,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:6}}>· 今天</span>}</div>
         </div>
-        {/* 📝 随手记 */}
-        <div style={{marginBottom:28}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <span style={{fontSize:16,color:T.text,fontWeight:600}}>📝 随手记</span>
-            <button onClick={()=>sENote(!eNote)} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:13,fontWeight:500}}>{eNote?"完成":"编辑"}</button>
-          </div>
-          {eNote?<textarea value={entry?.note||""} onChange={e=>updateEntry(sel,{note:e.target.value})} placeholder="随便写点什么..." style={{width:"100%",minHeight:80,background:T.accentSoft,border:`1px solid ${T.divider}`,borderRadius:T.radius,padding:14,color:T.text,fontSize:15,lineHeight:1.7,resize:"vertical",outline:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
-          :<div onClick={()=>sENote(true)} style={{background:T.accentSoft,borderRadius:T.radius,padding:16,minHeight:44,cursor:"pointer",fontSize:15,lineHeight:1.7,color:entry?.note?T.textSec:T.textTer,whiteSpace:"pre-wrap"}}>{entry?.note||"点击随手记录..."}</div>}
-        </div>
         {/* ✅ 待办 */}
         <div style={{marginBottom:28}}>
           <div style={{marginBottom:12}}><span style={{fontSize:16,color:T.text,fontWeight:600}}>✅ 待办事项 {entry?.todos?.length>0&&<span style={{color:T.textTer,fontWeight:400,fontSize:14}}>{entry.todos.filter(t=>t.done).length}/{entry.todos.length}</span>}</span></div>
@@ -421,7 +403,7 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
             const dK=dkFn(yr,mo,d);const isT=dK===todayK;const has=!!data[dK];
             const mE=has&&data[dK].mood?MOODS.find(m=>m.val===data[dK].mood)?.emoji:null;
             const dateTags=getDateTags(dK);
-            return <button key={d} onClick={()=>{sSel(dK);sEDiary(false);sENote(false);sETIdx(null);sOpenP({morning:true,afternoon:true,evening:true})}} style={{
+            return <button key={d} onClick={()=>{sSel(dK);sEDiary(false);sENote(false);sETIdx(null);sOpenP({morning:false,afternoon:false,evening:false})}} style={{
               display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",
               paddingTop:6,gap:2,minHeight:56,
               background:has?T.accentSoft:"transparent",
@@ -436,7 +418,33 @@ export default function LifeLogApp({data,tags,updateEntry,addTodo,toggleTodo,rem
               </div>}
             </button>
           })}
-        </div>
+       </div>
+      </div>
+
+      {/* ═══ Sticky Notes ═══ */}
+      <div style={{marginTop:16}}>
+        {(stickyNotes||[]).length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:12}}>
+          {(stickyNotes||[]).map(n=><div key={n.id} style={{
+            background:n.color,borderRadius:12,padding:"14px 16px",width:"calc(50% - 5px)",minHeight:80,
+            boxShadow:"0 2px 8px rgba(0,0,0,0.06)",position:"relative",
+            fontFamily:"'Georgia',serif",
+          }}>
+            {n.editing?<textarea defaultValue={n.text} autoFocus onBlur={e=>updateStickyNote(n.id,e.target.value)} style={{width:"100%",minHeight:60,background:"transparent",border:"none",color:"#1c1917",fontSize:13,lineHeight:1.6,resize:"none",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            :<div onClick={e=>{const el=e.currentTarget;const ta=document.createElement('textarea');ta.value=n.text;ta.style.cssText='width:100%;min-height:60px;background:transparent;border:none;color:#1c1917;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:inherit;box-sizing:border-box';el.innerHTML='';el.appendChild(ta);ta.focus();ta.onblur=()=>{updateStickyNote(n.id,ta.value);el.innerHTML='';el.textContent=ta.value||'点击编辑...';el.style.color=ta.value?'#1c1917':'#a8a29e'}}} style={{fontSize:13,lineHeight:1.6,color:n.text?"#1c1917":"#a8a29e",whiteSpace:"pre-wrap",cursor:"pointer",minHeight:40}}>
+              {n.text||"点击编辑..."}
+            </div>}
+            <button onClick={()=>deleteStickyNote(n.id)} style={{position:"absolute",top:6,right:8,background:"none",border:"none",color:"#a8a29e",cursor:"pointer",fontSize:12,opacity:0.5}}>×</button>
+          </div>)}
+        </div>}
+        <button onClick={()=>{
+          const STICKY_COLORS=["#fef9c3","#dbeafe","#fce7f3","#d1fae5","#ede9fe","#ffedd5"];
+          const color=STICKY_COLORS[(stickyNotes||[]).length%STICKY_COLORS.length];
+          addStickyNote({id:"sn_"+Date.now(),text:"",color});
+        }} style={{
+          width:"100%",padding:"14px 0",background:"#ffffff",border:"2px dashed #e7e5e4",
+          borderRadius:12,cursor:"pointer",fontSize:14,color:"#a8a29e",fontWeight:500,
+          display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+        }}>+ 便利贴</button>
       </div>
     </div>
   </div>;
