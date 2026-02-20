@@ -278,7 +278,9 @@ export default function LifeLogApp({data,tags,stickyNotes,updateEntry,addTodo,to
   // ── NAV (shared across all views including detail modal)
   const Nav=({showBack,onBack}={})=><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",flexWrap:"wrap",gap:8,background:T.bg,borderBottom:`1px solid ${T.divider}`,position:"sticky",top:0,zIndex:10}}>
     <div style={{display:"flex",alignItems:"center",gap:8}}>
-      {showBack&&<button onClick={onBack} style={{background:"none",border:"none",color:"#2563eb",cursor:"pointer",fontSize:14,fontWeight:500}}>← 返回</button>}
+      {showBack&&<button onClick={onBack} style={{background:T.accentSoft,border:`1px solid ${T.divider}`,color:T.textSec,cursor:"pointer",fontSize:12,fontWeight:500,display:"flex",alignItems:"center",gap:4,borderRadius:20,padding:"5px 14px"}}>
+        <span style={{fontSize:14}}>‹</span> 返回
+      </button>}
       {!showBack&&<h1 onClick={()=>{sView("calendar");sSel(null)}} style={{margin:0,fontSize:20,fontWeight:700,color:T.text,cursor:"pointer",letterSpacing:"-0.02em"}}>LifeLog</h1>}
       <div style={{display:"flex",gap:4}}>
         {[{id:"calendar",l:"📅 日历"},{id:"insights",l:"💡 洞见"}].map(v=>
@@ -319,10 +321,14 @@ export default function LifeLogApp({data,tags,stickyNotes,updateEntry,addTodo,to
       {eTIdx!==null&&entry?.todos?.[eTIdx]&&<EditTodoModal todo={entry.todos[eTIdx]} tags={tags} onSave={u=>handleSaveTodo(eTIdx,u)} onClose={()=>sETIdx(null)}/>}
       <Nav showBack onBack={()=>{sSel(null);sEDiary(false);sENote(false);sETIdx(null)}}/>
       <div style={{maxWidth:600,margin:"0 auto",padding:"16px 20px 100px"}}>
-        {/* Date title */}
-        <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{fontSize:22,fontWeight:700,color:T.text}}>{sel}</div>
-          <div style={{fontSize:13,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:6}}>· 今天</span>}</div>
+        {/* Date title with prev/next */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,marginBottom:24}}>
+          <button onClick={()=>{const d=new Date(sel+"T00:00:00");d.setDate(d.getDate()-1);sSel(dkFn(d.getFullYear(),d.getMonth()+1,d.getDate()));sEDiary(false);sENote(false);sOpenP({morning:false,afternoon:false,evening:false})}} style={{width:36,height:36,borderRadius:"50%",background:T.accentSoft,border:`1px solid ${T.divider}`,cursor:"pointer",fontSize:16,color:T.textSec,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:22,fontWeight:700,color:T.text}}>{sel}</div>
+            <div style={{fontSize:13,color:T.textTer}}>{new Date(sel+"T00:00:00").toLocaleDateString("zh-CN",{weekday:"long"})}{sel===todayK&&<span style={{color:"#2563eb",marginLeft:6}}>· 今天</span>}</div>
+          </div>
+          <button onClick={()=>{const d=new Date(sel+"T00:00:00");d.setDate(d.getDate()+1);sSel(dkFn(d.getFullYear(),d.getMonth()+1,d.getDate()));sEDiary(false);sENote(false);sOpenP({morning:false,afternoon:false,evening:false})}} style={{width:36,height:36,borderRadius:"50%",background:T.accentSoft,border:`1px solid ${T.divider}`,cursor:"pointer",fontSize:16,color:T.textSec,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
         </div>
         {/* ✅ 待办 */}
         <div style={{marginBottom:28}}>
@@ -418,7 +424,7 @@ export default function LifeLogApp({data,tags,stickyNotes,updateEntry,addTodo,to
               </div>}
             </button>
           })}
-       </div>
+        </div>
       </div>
 
       {/* ═══ Sticky Notes ═══ */}
@@ -429,10 +435,9 @@ export default function LifeLogApp({data,tags,stickyNotes,updateEntry,addTodo,to
             boxShadow:"0 2px 8px rgba(0,0,0,0.06)",position:"relative",
             fontFamily:"'Georgia',serif",
           }}>
-            {n.editing?<textarea defaultValue={n.text} autoFocus onBlur={e=>updateStickyNote(n.id,e.target.value)} style={{width:"100%",minHeight:60,background:"transparent",border:"none",color:"#1c1917",fontSize:13,lineHeight:1.6,resize:"none",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
-            :<div onClick={e=>{const el=e.currentTarget;const ta=document.createElement('textarea');ta.value=n.text;ta.style.cssText='width:100%;min-height:60px;background:transparent;border:none;color:#1c1917;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:inherit;box-sizing:border-box';el.innerHTML='';el.appendChild(ta);ta.focus();ta.onblur=()=>{updateStickyNote(n.id,ta.value);el.innerHTML='';el.textContent=ta.value||'点击编辑...';el.style.color=ta.value?'#1c1917':'#a8a29e'}}} style={{fontSize:13,lineHeight:1.6,color:n.text?"#1c1917":"#a8a29e",whiteSpace:"pre-wrap",cursor:"pointer",minHeight:40}}>
+            <div onClick={e=>{const el=e.currentTarget;const ta=document.createElement('textarea');ta.value=n.text;ta.style.cssText='width:100%;min-height:60px;background:transparent;border:none;color:#1c1917;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:inherit;box-sizing:border-box';el.innerHTML='';el.appendChild(ta);ta.focus();ta.onblur=()=>{updateStickyNote(n.id,ta.value);el.innerHTML='';el.textContent=ta.value||'点击编辑...';el.style.color=ta.value?'#1c1917':'#a8a29e'}}} style={{fontSize:13,lineHeight:1.6,color:n.text?"#1c1917":"#a8a29e",whiteSpace:"pre-wrap",cursor:"pointer",minHeight:40}}>
               {n.text||"点击编辑..."}
-            </div>}
+            </div>
             <button onClick={()=>deleteStickyNote(n.id)} style={{position:"absolute",top:6,right:8,background:"none",border:"none",color:"#a8a29e",cursor:"pointer",fontSize:12,opacity:0.5}}>×</button>
           </div>)}
         </div>}
