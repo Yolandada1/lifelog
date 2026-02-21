@@ -23,18 +23,18 @@ function useLocalData() {
   const updateEntry = useCallback((key, updates) => {
     setData(prev => ({
       ...prev,
-      [key]: { mood: 4, score: 6, diary: '', note: '', todos: [], ...prev[key], ...updates }
+      [key]: { mood: null, score: null, diary: '', note: '', todos: [], ...prev[key], ...updates }
     }))
   }, [])
 
-  const addTodo = useCallback((dateKey, text, todoTags, reminder, period) => {
+  const addTodo = useCallback((dateKey, text, todoTags, startTime, endTime, duration, period) => {
     setData(prev => {
       const existing = prev[dateKey] || { mood: 4, score: 6, diary: '', note: '', todos: [] }
       return {
         ...prev,
         [dateKey]: {
           ...existing,
-          todos: [...existing.todos, { id: 'l_' + Date.now(), text, done: false, tags: todoTags || [], reminder: reminder || null, period: period || 'morning' }]
+          todos: [...existing.todos, { id: 'l_' + Date.now(), text, done: false, tags: todoTags || [], period: period || 'morning', startTime: startTime || '', endTime: endTime || '', duration: duration || 0 }]
         }
       }
     })
