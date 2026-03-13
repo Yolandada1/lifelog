@@ -1,4 +1,43 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+
+function StickyNote({note,onUpdate,onDelete}){
+  const ref=useRef(null);
+  const saveTimer=useRef(null);
+  const inited=useRef(false);
+  useEffect(()=>{
+    if(ref.current&&!inited.current){
+      ref.current.innerText=note.text||'';
+      inited.current=true;
+    }
+  },[]);
+  const save=()=>{
+    clearTimeout(saveTimer.current);
+    saveTimer.current=setTimeout(()=>{
+      if(ref.current)onUpdate(note.id,ref.current.innerText);
+    },800);
+  };
+  return <div style={{
+    background:note.color,borderRadius:12,padding:"14px 16px",width:"calc(50% - 5px)",minHeight:80,
+    boxShadow:"0 2px 8px rgba(0,0,0,0.06)",position:"relative",fontFamily:"'Georgia',serif",
+  }}>
+    <div ref={ref} contentEditable suppressContentEditableWarning
+      onInput={save}
+      onBlur={()=>{if(ref.current)onUpdate(note.id,ref.current.innerText)}}
+      placeholder="点击编辑..."
+      style={{
+        fontSize:13,lineHeight:1.6,color:"#1c1917",whiteSpace:"pre-wrap",
+        minHeight:40,outline:"none",cursor:"text",
+        empty:"before",
+      }}
+    />
+    <style>{`[contenteditable]:empty:before{content:attr(placeholder);color:#a8a29e;pointer-events:none}`}</style>
+    <div style={{display:"flex",gap:4,position:"absolute",top:6,right:6}}>
+      <button onMouseDown={e=>{e.preventDefault();document.execCommand('bold')}} style={{background:"rgba(0,0,0,0.06)",border:"none",borderRadius:4,width:22,height:22,cursor:"pointer",fontSize:11,fontWeight:700,color:"#57534e",display:"flex",alignItems:"center",justifyContent:"center"}} title="加粗">B</button>
+      <button onMouseDown={e=>{e.preventDefault();document.execCommand('strikeThrough')}} style={{background:"rgba(0,0,0,0.06)",border:"none",borderRadius:4,width:22,height:22,cursor:"pointer",fontSize:11,color:"#57534e",display:"flex",alignItems:"center",justifyContent:"center",textDecoration:"line-through"}} title="划线">S</button>
+      <button onMouseDown={e=>{e.preventDefault();onDelete(note.id)}} style={{background:"rgba(0,0,0,0.06)",border:"none",borderRadius:4,width:22,height:22,cursor:"pointer",fontSize:11,color:"#a8a29e",display:"flex",alignItems:"center",justifyContent:"center"}} title="删除">×</button>
+    </div>
+  </div>;
+}
 
 const TAG_COLORS=["#2563eb","#9333ea","#059669","#dc2626","#d97706","#db2777","#0891b2","#ea580c","#4f46e5","#16a34a","#e11d48","#ca8a04"];
 const MOODS=[
@@ -540,15 +579,7 @@ export default function LifeLogApp({data,tags,stickyNotes,updateEntry,addTodo,to
       {/* Sticky Notes */}
       <div style={{marginTop:16}}>
         {(stickyNotes||[]).length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:12}}>
-          {(stickyNotes||[]).map(n=><div key={n.id} style={{
-            background:n.color,borderRadius:12,padding:"14px 16px",width:"calc(50% - 5px)",minHeight:80,
-            boxShadow:"0 2px 8px rgba(0,0,0,0.06)",position:"relative",fontFamily:"'Georgia',serif",
-          }}>
-            <div onClick={e=>{const el=e.currentTarget;const ta=document.createElement('textarea');ta.value=n.text;ta.style.cssText='width:100%;min-height:60px;background:transparent;border:none;color:#1c1917;font-size:13px;line-height:1.6;resize:none;outline:none;font-family:inherit;box-sizing:border-box';el.innerHTML='';el.appendChild(ta);ta.focus();ta.onblur=()=>{updateStickyNote(n.id,ta.value);el.innerHTML='';el.textContent=ta.value||'点击编辑...';el.style.color=ta.value?'#1c1917':'#a8a29e'}}} style={{fontSize:13,lineHeight:1.6,color:n.text?"#1c1917":"#a8a29e",whiteSpace:"pre-wrap",cursor:"pointer",minHeight:40}}>
-              {n.text||"点击编辑..."}
-            </div>
-            <button onClick={()=>deleteStickyNote(n.id)} style={{position:"absolute",top:6,right:8,background:"none",border:"none",color:"#a8a29e",cursor:"pointer",fontSize:12,opacity:0.5}}>×</button>
-          </div>)}
+          {(stickyNotes||[]).map(n=><StickyNote key={n.id} note={n} onUpdate={updateStickyNote} onDelete={deleteStickyNote}/>)}
         </div>}
         <button onClick={()=>{
           const color=STICKY_COLORS[(stickyNotes||[]).length%STICKY_COLORS.length];
